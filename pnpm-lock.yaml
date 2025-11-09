@@ -43,6 +43,9 @@ importers:
       class-validator:
         specifier: ^0.14.2
         version: 0.14.2
+      dotenv:
+        specifier: ^16.4.7
+        version: 16.6.1
       drizzle-orm:
         specifier: ^0.38.4
         version: 0.38.4(@types/react@18.3.26)(postgres@3.4.7)(react@18.3.1)
