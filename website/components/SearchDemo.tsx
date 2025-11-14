@@ -53,7 +53,7 @@ export default function SearchDemo() {
             placeholder="Search collections by name or address..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full bg-[#0f1115]/90 border border-[#2a2f37] rounded-md pl-10 pr-4 py-3 text-white placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-[#3af73e] focus-visible:border-transparent"
+            className="w-full bg-[#0f1115]/90 border border-[#2a2f37] rounded-md pl-10 pr-4 py-3 text-white placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-[#16A34A] focus-visible:border-transparent"
           />
           <div className="absolute inset-y-0 left-0 flex items-center pl-3">
             <svg

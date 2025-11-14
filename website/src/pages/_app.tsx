@@ -76,19 +76,19 @@ function MyApp({ Component, pageProps }: AppProps) {
       <WagmiProvider config={config}>
         <QueryClientProvider client={client}>
           <RainbowKitProvider locale='en' theme={darkTheme({
-            accentColor: '#3af73e',
+            accentColor: '#16A34A',
             accentColorForeground: '#000'
           })}>
             {isHomePage ? (
               // Home page layout without sidebar/header/footer
-              <main className={`${inter.variable} ${orbitron.variable} ${rajdhani.variable} ${exo2.variable} ${audiowide.variable} font-inter min-h-screen bg-[#141414] text-white w-full`}>
+              <main className={`${inter.variable} ${orbitron.variable} ${rajdhani.variable} ${exo2.variable} ${audiowide.variable} font-inter min-h-screen bg-background text-primary w-full`}>
                 <Component {...pageProps} />
               </main>
             ) : (
               // Other pages with normal layout
-              <main className={`${inter.variable} ${orbitron.variable} ${rajdhani.variable} ${exo2.variable} ${audiowide.variable} font-inter flex min-h-screen bg-[#141414] text-white w-full`}>
+              <main className={`${inter.variable} ${orbitron.variable} ${rajdhani.variable} ${exo2.variable} ${audiowide.variable} font-inter flex min-h-screen bg-background text-primary w-full`}>
                 <Sidebar />
-                <div className="flex-1 flex flex-col sm:ml-20">
+                <div className="flex-1 flex flex-col sm:ml-20 border-l border-primary/60">
                   <Header />
                   <Component {...pageProps} />
                   <Footer />

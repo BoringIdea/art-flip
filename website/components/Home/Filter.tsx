@@ -32,16 +32,16 @@ export const Filter = ({
           <TabsTrigger
             value="trending"
             onClick={() => onTrendingFilterChange('trending')}
-            className="flex-1 sm:flex-none px-4 py-1.5 rounded-xs data-[state=active]:bg-[#3af73e] data-[state=active]:text-black text-sm sm:text-base"
+            className="flex-1 sm:flex-none px-4 py-1.5 rounded-xs data-[state=active]:bg-[#16A34A] data-[state=active]:text-black text-sm sm:text-base"
           >
-            Trending
+            TRENDING
           </TabsTrigger>
           <TabsTrigger
             value="top"
             onClick={() => onTrendingFilterChange('top')}
-            className="flex-1 sm:flex-none px-4 py-1.5 rounded-xs data-[state=active]:bg-[#3af73e] data-[state=active]:text-black text-sm sm:text-base"
+            className="flex-1 sm:flex-none px-4 py-1.5 rounded-xs data-[state=active]:bg-[#16A34A] data-[state=active]:text-black text-sm sm:text-base"
           >
-            Top
+            TOP
           </TabsTrigger>
         </TabsList>
       </Tabs>
@@ -61,7 +61,7 @@ export const Filter = ({
         <select
           value={selectedChain}
           onChange={(e) => onChainChange(e.target.value)}
-          className="w-full sm:w-auto h-9 sm:h-10 appearance-none bg-[#171a1f] border border-[#2f343e] rounded-lg px-3 sm:px-4 cursor-pointer hover:border-[#3af73e] focus:outline-none focus:border-[#3af73e] text-white text-xs sm:text-base"
+          className="w-full sm:w-auto h-9 sm:h-10 appearance-none bg-[#171a1f] border border-[#2f343e] rounded-lg px-3 sm:px-4 cursor-pointer hover:border-[#16A34A] focus:outline-none focus:border-[#16A34A] text-white text-xs sm:text-base"
         >
           {chains.map((chain) => (
             <option key={chain.id} value={chain.id} className="bg-[#171a1f] text-white">{chain.name}</option>

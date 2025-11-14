@@ -97,46 +97,46 @@ export default function Litepaper() {
         <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet" />
       </Head>
       <main className="flex justify-center px-2 sm:px-6 lg:px-8 py-8 pt-20 bg-black">
-      <div className="max-w-4xl w-full">
-        <div className="p-2 sm:p-8">
-          <div className="flex justify-between items-center mb-12">
-            <div className="flex-1"></div>
-            <div className="flex items-center gap-3 text-[#4CAF50]">
-              <span
-                onClick={() => setLanguage('en')}
-                className={`cursor-pointer hover:text-[#45a049] transition-colors text-lg font-medium ${language === 'en' ? 'underline underline-offset-4' : ''}`}
-              >
-                EN
-              </span>
-              <span className="text-gray-400 text-lg">|</span>
-              <span
-                onClick={() => setLanguage('zh')}
-                className={`cursor-pointer hover:text-[#45a049] transition-colors text-lg font-medium ${language === 'zh' ? 'underline underline-offset-4' : ''}`}
-              >
-                中文
-              </span>
-            </div>
-            <div className="flex-1 flex justify-end">
+        <div className="max-w-5xl w-full">
+          <div className="border border-border bg-bg-card/70 rounded-3xl p-4 sm:p-8">
+            <div className="flex justify-between items-center mb-8">
+              <div className="flex items-center gap-3 text-secondary">
+                <span
+                  onClick={() => setLanguage('en')}
+                  className={`cursor-pointer text-sm sm:text-base font-semibold tracking-[0.4em] ${language === 'en' ? 'text-white underline underline-offset-4 decoration-flip-primary/70' : 'text-secondary hover:text-white/80'}`}
+                >
+                  EN
+                </span>
+                <span className="text-secondary text-sm sm:text-base">|</span>
+                <span
+                  onClick={() => setLanguage('zh')}
+                  className={`cursor-pointer text-sm sm:text-base font-semibold tracking-[0.4em] ${language === 'zh' ? 'text-white underline underline-offset-4 decoration-flip-primary/70' : 'text-secondary hover:text-white/80'}`}
+                >
+                  中文
+                </span>
+              </div>
               <a
                 href="https://flipnft.gitbook.io/flip-docs"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-400 hover:text-blue-300 underline text-lg font-medium transition-colors"
+                className="text-secondary text-sm sm:text-base font-semibold uppercase tracking-[0.3em] border border-border px-3 py-2 rounded hover:border-flip-primary/60"
               >
                 {language === 'en' ? 'More Details' : '查看详情'}
               </a>
             </div>
-          </div>
 
-          <div className="flip-typo space-y-12 text-[#4CAF50] leading-relaxed prose prose-green max-w-none 
-            prose-h1:!text-[#4CAF50] prose-h2:!text-[#4CAF50] prose-h3:!text-[#4CAF50] 
-            prose-p:text-white prose-li:text-white
-            prose-h1:text-3xl sm:prose-h1:text-5xl prose-h1:font-bold prose-h1:tracking-tight
-            prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:font-semibold prose-h2:tracking-wide
-            prose-h3:text-xl sm:prose-h3:text-2xl prose-h3:font-medium
-            prose-p:text-base sm:prose-p:text-lg prose-p:font-light prose-p:leading-8
-            prose-li:text-base sm:prose-li:text-lg prose-li:font-light prose-li:leading-7
-            prose-strong:font-semibold prose-strong:text-[#4CAF50]">
+            <div className="flip-typo space-y-12 leading-relaxed prose max-w-full text-white
+              prose-h1:text-white prose-h2:text-white prose-h3:text-white
+              prose-p:text-white/90 prose-li:text-white/80
+              prose-strong:text-white
+              prose-h1:text-3xl sm:prose-h1:text-5xl prose-h1:font-bold prose-h1:tracking-tight
+              prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:font-semibold prose-h2:tracking-wide
+              prose-h3:text-xl sm:prose-h3:text-2xl prose-h3:font-medium
+              prose-p:text-base sm:prose-p:text-lg prose-p:font-light prose-p:leading-8
+              prose-li:text-base sm:prose-li:text-lg prose-li:font-light prose-li:leading-7
+              [--tw-prose-borders:rgba(255,255,255,0.15)]
+              prose-code:text-white/80 prose-code:bg-[#141414]
+              prose-pre:bg-[#0d0d0d] prose-pre:text-white/80">
             <ReactMarkdown>
               {content[language].title}
             </ReactMarkdown>

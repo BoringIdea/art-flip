@@ -1,10 +1,9 @@
 'use client'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardFooter, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import * as Checkbox from "@radix-ui/react-checkbox"
 import { CheckIcon } from "@radix-ui/react-icons"
-import { PrimaryColor } from "@/src/utils";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 interface NFTItemCardProps {
   token: {
@@ -42,44 +41,53 @@ export const NFTItemCardBuy = ({ token, collectionSymbol, contractAddress, isPen
     }
   }
 
-  console.log({ token, collectionSymbol })
   return (
     <Card
-      className={`group flex flex-col justify-between relative transition-all duration-200 cursor-pointer ${isSelected ? 'ring-1 ring-[#3AF73E] scale-[1.02]' : '#3AF73E'} bg-black text-white`}
+      className={cn(
+        "group relative flex flex-col gap-0 cursor-pointer transition-all duration-150 hover:bg-bg-card-hover",
+        isSelected && "outline outline-2 outline-flip-primary/80"
+      )}
       ref={ref}
       onClick={handleCardClick}
     >
-      <Checkbox.Root
-        className={`absolute top-2 right-2 z-10 h-5 w-5 rounded-full border-2 flex items-center justify-center shadow-md ${isSelected
-          ? 'bg-[#3AF73E] border-[#3AF73E]'
-          : 'bg-black border-[#3AF73E]'
-          }`}
-        checked={isSelected}
-        onCheckedChange={handleSelect}
+      <button
+        type="button"
+        aria-pressed={isSelected}
+        className={cn(
+          "absolute top-3 right-3 z-10 h-5 w-5 border border-border bg-background text-primary flex items-center justify-center rounded-none focus:outline-none focus:ring-2 focus:ring-flip-primary/60",
+          isSelected && "bg-flip-primary border-flip-primary text-black"
+        )}
+        onClick={(event) => {
+          event.stopPropagation();
+          handleSelect();
+        }}
       >
-        <Checkbox.Indicator>
-          <CheckIcon className={`h-4 w-4 ${isSelected ? 'text-black' : `text-[${PrimaryColor}]`
-            }`} />
-        </Checkbox.Indicator>
-      </Checkbox.Root>
-      <CardContent className="flex-grow p-1">
-        <img
-          src={token.image.originalUrl}
-          alt={`${token.name} #${token.tokenId}`}
-          className="w-full h-auto object-cover rounded-md"
-        />
-      </CardContent>
-      <CardFooter className="relative pt-2 pb-8 px-2">
-        <CardTitle className="hidden md:block text-white px-2 font-bold pt-4">{collectionSymbol} #{token.tokenId}</CardTitle>
-        <div className={`absolute inset-0 z-10 rounded-b-lg flex items-center justify-center transition-opacity duration-200 opacity-100 md:opacity-0 md:group-hover:opacity-100 pointer-events-auto md:pointer-events-none md:group-hover:pointer-events-auto bg-black/70 backdrop-blur-sm`}>
-          <Button
-            disabled={isPending}
-            onClick={() => onBuy(token.tokenId)}
-            className="w-full mx-2 bg-[#3af73e] hover:bg-emerald-600 text-black"
-          >
-            Buy NFT
-          </Button>
+        <CheckIcon className={cn("h-3.5 w-3.5", isSelected ? "text-black" : "text-flip-primary")} />
+      </button>
+      <CardContent className="flex-grow p-0 border-b border-border">
+        <div className="aspect-square w-full bg-bg-tertiary">
+          <img
+            src={token.image.originalUrl}
+            alt={`${token.name} #${token.tokenId}`}
+            className="h-full w-full object-cover"
+          />
         </div>
+      </CardContent>
+      <CardFooter className="flex flex-col gap-2 px-4 py-3">
+        <CardTitle className="text-xs font-bold text-secondary uppercase tracking-[0.2em] flex items-center justify-between">
+          <span>{collectionSymbol ?? 'NFT'}</span>
+          <span className="text-primary font-black tracking-tight">#{token.tokenId}</span>
+        </CardTitle>
+        <Button
+          disabled={isPending}
+          onClick={(event) => {
+            event.stopPropagation();
+            onBuy(token.tokenId);
+          }}
+          className="w-full text-xs tracking-[0.2em]"
+        >
+          Buy NFT
+        </Button>
       </CardFooter>
     </Card>
   );
