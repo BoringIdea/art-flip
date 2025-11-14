@@ -10,7 +10,7 @@ export default function NFTTraits({ traits }: { traits?: TraitItem[] }) {
   const hasTraits = Array.isArray(traits) && traits.length > 0;
   return (
     <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-4 h-72 overflow-y-auto">
-      <div className="text-sm font-semibold text-gray-300 mb-3">TRAITS</div>
+      {/* <div className="text-sm font-semibold text-gray-300 mb-3">TRAITS</div> */}
       {!hasTraits ? (
         <div className="w-full h-full flex items-center justify-center text-gray-500">No traits</div>
       ) : (

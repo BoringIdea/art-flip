@@ -14,6 +14,7 @@ import {
   Legend
 } from 'chart.js';
 import { Collection } from "@/src/api/types";
+import { cn } from "@/lib/utils";
 import { getChainSymbol, PrimaryColor } from "@/src/utils";
 
 ChartJS.register(
@@ -34,9 +35,10 @@ interface PriceChartProps {
     floor_price?: string;
   };
   chainId: number;
+  className?: string;
 }
 
-export default function PriceChart({ collection, chainId }: PriceChartProps) {
+export default function PriceChart({ collection, chainId, className }: PriceChartProps) {
   const [priceChartData, setPriceChartData] = useState<{
     labels: string[];
     datasets: any[];
@@ -111,64 +113,75 @@ export default function PriceChart({ collection, chainId }: PriceChartProps) {
   }, [collection]);
 
   return (
-    <div className="w-full mt-4 h-[260px] sm:h-[500px]">
-      <h2 className="text-white text-base sm:text-xl font-medium mb-2 sm:mb-4 text-center w-full">Mint Price Curve</h2>
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
-        <div className="flex flex-row flex-wrap items-center justify-center w-full gap-2 sm:gap-6 mb-2 sm:mb-4">
-          <div className="flex items-center gap-1 sm:gap-2">
-            <div className="w-4 h-1 bg-white"></div>
-            <span className="text-[rgba(255,255,255,0.65)] text-xs sm:text-sm">Mint Price</span>
-          </div>
-          <div className="flex items-center gap-1 sm:gap-2">
-            <div className="w-4 h-1 bg-[#3af73e]"></div>
-            <span className="text-[rgba(255,255,255,0.65)] text-xs sm:text-sm">Current Position</span>
-          </div>
-        </div>
+    <div className={cn("w-full h-full flex flex-col gap-3", className)}>
+      <div className="flex items-center gap-6 text-[11px] uppercase tracking-[0.3em] text-secondary">
+        <span className="flex items-center gap-2 text-secondary">
+          <span className="w-6 h-[2px] bg-white" />
+          Mint Price
+        </span>
+        <span className="flex items-center gap-2 text-secondary">
+          <span className="w-6 h-[2px]" style={{ backgroundColor: PrimaryColor }} />
+          Current Position
+        </span>
       </div>
-      <Line
-        data={priceChartData}
-        options={{
-          responsive: true,
-          maintainAspectRatio: false,
-          aspectRatio: 0.96,
-          plugins: {
-            legend: {
-              display: false
-            },
-          },
-          scales: {
-            y: {
-              type: 'linear',
-              display: true,
-              position: 'left',
-              min: 0,
-              title: {
-                display: true,
-                text: `Price (${getChainSymbol(chainId)})`,
-                color: 'white',
+      <div className="flex-1">
+        <Line
+          data={priceChartData}
+          options={{
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false,
               },
-              ticks: {
-                callback: function (value) {
-                  return Number(value).toFixed(2);
-                }
+              tooltip: {
+                displayColors: false,
+                backgroundColor: 'rgba(0,0,0,0.7)',
+                titleColor: '#fff',
+                bodyColor: '#fff',
               },
-              grid: {
-                display: true,
-                drawOnChartArea: true,
-                drawTicks: true,
-                color: 'rgba(76, 175, 80, 0.2)'
-              }
             },
-            x: {
-              title: {
-                display: true,
-                color: 'white',
-                text: 'Current Supply'
-              }
-            }
-          }
-        }}
-      />
+            elements: {
+              point: {
+                radius: 0,
+              },
+            },
+            scales: {
+              y: {
+                type: 'linear',
+                min: 0,
+                ticks: {
+                  color: '#aaa',
+                  callback: (value) => Number(value).toFixed(2),
+                },
+                title: {
+                  display: true,
+                  text: `PRICE (${getChainSymbol(chainId)})`,
+                  color: '#fff',
+                },
+                grid: {
+                  color: 'rgba(22, 163, 74, 0.2)',
+                  // drawBorder: false,
+                },
+              },
+              x: {
+                ticks: {
+                  color: '#aaa',
+                },
+                title: {
+                  display: true,
+                  color: '#fff',
+                  text: 'CURRENT SUPPLY',
+                },
+                grid: {
+                  color: 'rgba(22, 163, 74, 0.15)',
+                  // drawBorder: false,
+                },
+              },
+            },
+          }}
+        />
+      </div>
     </div>
   );
 }

@@ -402,18 +402,23 @@ export default function Buy({ contractAddress, collection }: BuyProps) {
   return (
     <div className="flex flex-col pb-32">
       {/* Header with quick buy controls */}
-      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center p-2 sm:p-4 gap-2 sm:gap-4 border-b border-[#444]">
-        <h1 className="text-base sm:text-lg text-[#aaa] mb-2 sm:mb-0">Listed NFTs: {listedTokens.length}</h1>
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto ml-0 sm:ml-auto pr-0 sm:pr-4">
-          <div className="flex items-center w-full sm:w-auto rounded-lg border border-[#444] bg-[#18191c] overflow-hidden">
+      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 border-b border-border px-3 sm:px-4 py-4 bg-bg-card">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-secondary">Listed NFTs</p>
+          <p className="text-lg font-black text-primary">{listedTokens.length}</p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:ml-auto text-xs">
+          <div className="flex items-center border border-border bg-bg-tertiary text-primary w-full sm:w-auto">
             <button
               type="button"
-              className="w-10 h-10 text-white font-bold bg-[#222] hover:bg-[#333] active:bg-[#444] transition"
+              className="h-8 w-8 border-r border-border font-black hover:bg-bg-card-hover transition-colors"
               onClick={() => setQuickBuyCount(prev => {
                 if (typeof prev === 'number') return Math.max(1, prev - 1);
                 return 1;
               })}
-            >-</button>
+            >
+              -
+            </button>
             <input
               type="number"
               min={1}
@@ -427,20 +432,21 @@ export default function Buy({ contractAddress, collection }: BuyProps) {
                   setQuickBuyCount(value);
                 }
               }}
-              className="w-full sm:w-16 bg-transparent text-white text-center focus:outline-none text-base sm:text-lg border-0 focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              style={{ appearance: 'textfield' }}
+              className="w-full sm:w-14 bg-transparent text-primary text-center font-semibold focus:outline-none focus:ring-0 text-sm border-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
             <button
               type="button"
-              className="w-10 h-10 text-white font-bold bg-[#222] hover:bg-[#333] active:bg-[#444] transition"
+              className="h-8 w-8 border-l border-border font-black hover:bg-bg-card-hover transition-colors"
               onClick={() => setQuickBuyCount(prev => {
                 if (typeof prev === 'number') return Math.min(Math.min(20, maxSweep), prev + 1);
                 return 1;
               })}
-            >+</button>
+            >
+              +
+            </button>
           </div>
-          <button
-            className="w-full sm:w-auto bg-[#3af73e] text-black font-medium px-4 py-2 sm:py-1.5 rounded hover:bg-opacity-90 transition-colors"
+          <Button
+            className="w-full sm:w-auto text-xs tracking-[0.2em] px-3 py-2"
             onClick={quickBuyToken}
           >
             Quick buy ({formatNumberWithMaxDecimalsAndRounding(Number(getBatchBuyPrice(
@@ -450,39 +456,38 @@ export default function Buy({ contractAddress, collection }: BuyProps) {
               Number(quickBuyCount),
               collection?.creator_fee || '0'
             )) / 1e18, 2)} {getChainSymbol(chainId)})
-          </button>
+          </Button>
         </div>
       </div>
       {/* NFT Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-2 sm:gap-4 p-2 sm:p-4 min-h-[200px]">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4 p-3 sm:p-4 min-h-[200px]">
         {(isLoadingAvailableTokens || !hasInitialLoad) && !loadingTimeout ? (
           <div className="col-span-full flex justify-center items-center min-h-[200px]">
             <Loading />
           </div>
         ) : loadingTimeout ? (
-          <div className="col-span-full flex flex-col justify-center items-center min-h-[200px] text-gray-400">
+          <div className="col-span-full flex flex-col justify-center items-center min-h-[200px] text-secondary">
             <div className="text-6xl mb-4">⏰</div>
-            <div className="text-xl font-medium mb-2">Loading Timeout</div>
-            <div className="text-sm text-gray-500 text-center mb-4">
+            <div className="text-xl font-bold mb-2 text-primary">Loading Timeout</div>
+            <div className="text-sm text-secondary text-center mb-4">
               Unable to load NFTs. Please check your connection and try again.
             </div>
-            <button
+            <Button
               onClick={() => {
                 setLoadingTimeout(false);
                 setHasInitialLoad(false);
                 setIsProcessingMetadata(false);
                 refetchAvailableTokens();
               }}
-              className="bg-[#3af73e] text-black font-medium px-4 py-2 rounded hover:bg-opacity-90 transition-colors"
             >
               Retry
-            </button>
+            </Button>
           </div>
         ) : displayedTokens.length === 0 ? (
-          <div className="col-span-full flex flex-col justify-center items-center min-h-[200px] text-gray-400">
+          <div className="col-span-full flex flex-col justify-center items-center min-h-[200px] text-secondary">
             <div className="text-6xl mb-4">🛒</div>
-            <div className="text-xl font-medium mb-2">No NFTs Available</div>
-            <div className="text-sm text-gray-500">All NFTs have been sold or none are listed yet.</div>
+            <div className="text-xl font-bold mb-2 text-primary">No NFTs Available</div>
+            <div className="text-sm text-secondary">All NFTs have been sold or none are listed yet.</div>
           </div>
         ) : (
           displayedTokens.map((token, idx) => (

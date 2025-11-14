@@ -53,7 +53,7 @@ export default function NFTActivity({ collectionAddress, tokenId }: { collection
 
   return (
     <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-4 h-72 overflow-y-auto">
-      <div className="text-sm font-semibold text-gray-300 mb-3">ACTIVITY</div>
+      {/* <div className="text-sm font-semibold text-gray-300 mb-3">ACTIVITY</div> */}
       {isLoading ? (
         <div className="text-gray-500 text-sm">Loading...</div>
       ) : txs && txs.length > 0 ? (

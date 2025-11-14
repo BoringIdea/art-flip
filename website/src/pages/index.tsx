@@ -47,7 +47,7 @@ const Home: NextPage = () => {
     }
   }, [collections]);
   const chains = [
-    { id: 'all', name: 'All Chains' },
+    { id: 'all', name: 'ALL CHAINS' },
   ];
 
   const handleRowClick = (collectionAddress: string) => {

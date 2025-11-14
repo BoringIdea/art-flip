@@ -63,34 +63,30 @@ const Pagination: React.FC<PaginationProps> = ({
   const pageNumbers = getPageNumbers();
 
   const baseButton =
-    'w-8 h-8 flex items-center justify-center rounded-full text-sm select-none';
-  const activeButton = 'bg-[#3af73e] text-black font-semibold';
-  const inactiveButton = 'hover:bg-[#2f343e]';
+    'h-9 w-9 border border-border flex items-center justify-center text-[10px] font-bold uppercase tracking-[0.15em] text-secondary transition-colors disabled:text-muted disabled:cursor-not-allowed disabled:border-border/40 rounded-none';
+  const activeButton = 'bg-flip-primary text-black border-flip-primary';
+  const inactiveButton = 'hover:bg-bg-card-hover';
 
   return (
     <div className="flex items-center gap-2">
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className={`${baseButton} ${currentPage === 1
-          ? 'text-gray-500 cursor-not-allowed'
-          : inactiveButton
-          }`}
+        className={`${baseButton} ${currentPage === 1 ? '' : inactiveButton}`}
       >
         &lt;
       </button>
 
       {pageNumbers.map((page, index) =>
         page === DOTS ? (
-          <span key={index} className="px-2 text-gray-400 text-sm">
+          <span key={index} className="px-2 text-secondary text-xs tracking-[0.2em]">
             ...
           </span>
         ) : (
           <button
             key={index}
             onClick={() => onPageChange(Number(page))}
-            className={`${baseButton} ${page === currentPage ? activeButton : inactiveButton
-              }`}
+            className={`${baseButton} ${page === currentPage ? activeButton : inactiveButton}`}
           >
             {page}
           </button>
@@ -100,10 +96,7 @@ const Pagination: React.FC<PaginationProps> = ({
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className={`${baseButton} ${currentPage === totalPages
-          ? 'text-gray-500 cursor-not-allowed'
-          : inactiveButton
-          }`}
+        className={`${baseButton} ${currentPage === totalPages ? '' : inactiveButton}`}
       >
         &gt;
       </button>

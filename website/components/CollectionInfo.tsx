@@ -1,5 +1,5 @@
 import { Collection } from "@/src/api"
-import { getChainSymbol } from "@/src/utils"
+import { getChainSymbol, sliceAddress } from "@/src/utils"
 import { formatEther } from "ethers"
 import { useChainId } from "wagmi"
 import Image from "next/image"
@@ -48,24 +48,20 @@ export default function CollectionInfo({ collection }: { collection?: Collection
   // If collection data is not loaded, show loading state
   if (!collection) {
     return (
-      <div className="text-white p-4 rounded-lg border border-gray-800 mb-6">
-        <div className="flex flex-col md:flex-row items-center md:items-start justify-between mb-4">
-          <div className="flex flex-col items-center md:flex-row md:items-start gap-4 mb-4 md:mb-0">
-            <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-700 animate-pulse"></div>
-            <div className="flex flex-col items-center md:items-start">
-              <div className="h-6 w-32 bg-gray-700 rounded animate-pulse mb-2"></div>
-              <div className="flex gap-2 mt-1">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="w-4 h-4 bg-gray-700 rounded animate-pulse"></div>
-                ))}
-              </div>
+      <div className="mb-6 border border-border bg-black/40 p-4 sm:p-6">
+        <div className="flex flex-col gap-6 animate-pulse">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 border border-border bg-bg-card" />
+            <div className="space-y-2 w-full">
+              <div className="h-6 w-40 bg-bg-card" />
+              <div className="h-3 w-24 bg-bg-card" />
             </div>
           </div>
-          <div className="grid grid-cols-2 md:flex md:flex-wrap gap-4 md:gap-6 text-sm w-full md:w-auto">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="text-center">
-                <div className="h-4 w-16 bg-gray-700 rounded animate-pulse mb-1"></div>
-                <div className="h-5 w-20 bg-gray-700 rounded animate-pulse"></div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[...Array(8)].map((_, idx) => (
+              <div key={idx} className="space-y-2">
+                <div className="h-3 bg-bg-card" />
+                <div className="h-4 bg-bg-card" />
               </div>
             ))}
           </div>
@@ -74,11 +70,24 @@ export default function CollectionInfo({ collection }: { collection?: Collection
     )
   }
 
+  const chainSymbol = getChainSymbol(chainId)
+  const stats = [
+    { label: "Floor Price", value: `${Number(formatEther(collection?.floor_price?.toString() || '0')).toFixed(4)} ${chainSymbol}` },
+    { label: "Creator Fee", value: `${(Number(formatEther(collection?.creator_fee?.toString() || '0')) * 100).toFixed(2)}%` },
+    { label: "1D Volume", value: `${Number(formatEther(BigInt(collection?.volume_1d?.toString() || '0'))).toFixed(2)} ${chainSymbol}` },
+    { label: "All Volume", value: `${Number(formatEther(BigInt(collection?.total_volume?.toString() || '0'))).toFixed(2)} ${chainSymbol}` },
+    { label: "1D Sales", value: `${collection?.sales_1d || 0}` },
+    { label: "Owners", value: `${collection.owners}` },
+    { label: "Listed", value: `${calculateListedCount()} (${calculateListedPercentage()})` },
+    { label: "Minted", value: `${collection.total_supply} / ${collection.max_supply}` },
+  ]
+
   return (
-    <div className="text-white p-4 rounded-lg border border-gray-800 mb-6">
-      <div className="flex flex-col md:flex-row items-center md:items-start justify-between mb-4">
-        <div className="flex flex-col items-center md:flex-row md:items-start gap-4 mb-4 md:mb-0">
-          <div className="w-16 h-16 rounded-full overflow-hidden">
+    <div className="mb-6 border border-border bg-gradient-to-b from-black via-bg-card to-bg-card/70 px-4 sm:px-6 py-5 text-primary">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 border border-border overflow-hidden bg-bg-card">
             <Image
               src={collectionImage || '/flip.svg'}
               alt={collection?.name}
@@ -87,78 +96,63 @@ export default function CollectionInfo({ collection }: { collection?: Collection
               height={64}
             />
           </div>
-          <div className="flex flex-col items-center md:items-start">
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold">{collection.name}</h1>
+            <div className="flex flex-col">
+              <p className="text-[11px] uppercase tracking-[0.4em] text-secondary">Collection</p>
+              <h1 className="text-2xl font-bold text-white">{collection.name}</h1>
+              <div className="text-[11px] uppercase tracking-[0.3em] text-secondary mt-1">
+                {chainSymbol} • {collection.max_supply} Supply
+              </div>
             </div>
-            <div className="flex gap-2 mt-1">
-              <div className="relative">
+          </div>
+          <div className="space-y-2">
+            <div className="text-[10px] uppercase tracking-[0.3em] text-secondary">Contract</div>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="font-mono text-xs text-primary bg-black/40 border border-border px-3 py-1 inline-flex items-center gap-2">
+                {sliceAddress(collection.address)}
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(collection.address);
                     setShowToast(true);
                   }}
-                  className="text-gray-400 hover:text-white transition-colors flex items-center justify-center"
+                  className="text-secondary hover:text-flip-primary transition-colors"
+                  aria-label="Copy contract address"
                 >
-                  <FaCopy className="w-4 h-4" />
+                  <FaCopy className="w-3 h-3" />
                 </button>
-                <Toast
-                  message="Address copied"
-                  isVisible={showToast}
-                  onClose={() => setShowToast(false)}
-                />
+              </span>
+              <div className="flex items-center gap-2 text-secondary text-lg">
+                <SocialIcon href={collection?.meta_data?.website} icon={<FaGlobe />} label="Website" />
+                <SocialIcon href={collection?.meta_data?.twitter} icon={<FaTwitter />} label="Twitter" />
+                <SocialIcon href={collection?.meta_data?.discord} icon={<FaDiscord />} label="Discord" />
+                <button
+                  onClick={() => setShowInfoDialog(true)}
+                  className="w-8 h-8 border border-border text-secondary hover:text-flip-primary hover:border-flip-primary transition-colors flex items-center justify-center"
+                  aria-label="Collection description"
+                >
+                  <FaInfoCircle />
+                </button>
               </div>
-              {collection?.meta_data?.website ? (
-                <a href={collection.meta_data.website} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors flex items-center justify-center">
-                  <FaGlobe className="w-4 h-4" />
-                </a>
-              ) : (
-                <div className="text-gray-400 flex items-center justify-center">
-                  <FaGlobe className="w-4 h-4" />
-                </div>
-              )}
-              {collection?.meta_data?.twitter ? (
-                <a href={collection.meta_data.twitter} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors flex items-center justify-center">
-                  <FaTwitter className="w-4 h-4" />
-                </a>
-              ) : (
-                <div className="text-gray-400 flex items-center justify-center">
-                  <FaTwitter className="w-4 h-4" />
-                </div>
-              )}
-              {collection?.meta_data?.discord ? (
-                <a href={collection.meta_data.discord} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors flex items-center justify-center">
-                  <FaDiscord className="w-4 h-4" />
-                </a>
-              ) : (
-                <div className="text-gray-400 flex items-center justify-center">
-                  <FaDiscord className="w-4 h-4" />
-                </div>
-              )}
-              <button
-                onClick={() => setShowInfoDialog(true)}
-                className="text-gray-400 hover:text-white transition-colors flex items-center justify-center"
-              >
-                <FaInfoCircle className="w-4 h-4" />
-              </button>
             </div>
           </div>
         </div>
-        <div className="grid grid-cols-2 md:flex md:flex-wrap gap-4 md:gap-6 text-sm w-full md:w-auto">
-        <StatItem label="Floor Price" value={`${Number(formatEther(collection?.floor_price?.toString() || '0')).toFixed(4)} ${getChainSymbol(chainId)}`} />
-          <StatItem label="Creator Fee" value={`${(Number(formatEther(collection?.creator_fee?.toString() || '0')) * 100).toFixed(2)}%`} />
-          <StatItem label="1D Volume" value={`${Number(formatEther(BigInt(collection?.volume_1d?.toString() || '0'))).toFixed(2)} ${getChainSymbol(chainId)}`} />
-          <StatItem label="All Volume" value={`${Number(formatEther(BigInt(collection?.total_volume?.toString() || '0'))).toFixed(2)} ${getChainSymbol(chainId)}`} />
-          <StatItem label="1D Sales" value={`${collection?.sales_1d || 0}`} />
-          <StatItem label="Owners" value={`${collection.owners}`} />
-          <StatItem label="Listed" value={`${calculateListedCount()} (${calculateListedPercentage()})`} />
-          <StatItem label="Minted" value={`${collection.total_supply} / ${collection.max_supply}`} />
+
+        <div className="grid w-full grid-cols-2 sm:grid-cols-4 gap-4">
+          {stats.map((stat) => (
+            <StatItem key={stat.label} label={stat.label} value={stat.value} />
+          ))}
         </div>
       </div>
+
+      <Toast
+        message="Address copied"
+        isVisible={showToast}
+        onClose={() => setShowToast(false)}
+      />
+
       <AlertDialog open={showInfoDialog} onOpenChange={setShowInfoDialog}>
         <AlertDialogContent className="bg-black border-white/20">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">Collection Info</AlertDialogTitle>
+            <AlertDialogTitle className="text-white">COLLECTION INFO</AlertDialogTitle>
             <AlertDialogDescription className="whitespace-pre-wrap text-white/70">
               {collection?.meta_data?.description || "No description available"}
             </AlertDialogDescription>
@@ -182,13 +176,33 @@ interface StatItemProps {
   value: string
 }
 
-function StatItem({ label, value, }: StatItemProps) {
+function StatItem({ label, value }: StatItemProps) {
   return (
-    <div className="text-center">
-      <p className="text-gray-400">{label}</p>
-      <p className=" font-bold flex items-center justify-center">
-        {value}
-      </p>
+    <div className="border border-border/70 bg-black/30 px-3 py-3 flex flex-col gap-1">
+      <p className="text-[10px] uppercase tracking-[0.3em] text-secondary">{label}</p>
+      <p className="text-white font-semibold text-sm">{value}</p>
     </div>
+  )
+}
+
+function SocialIcon({ href, icon, label }: { href?: string; icon: React.ReactNode; label: string }) {
+  const content = (
+    <span className="w-8 h-8 border border-border text-secondary hover:text-flip-primary hover:border-flip-primary transition-colors inline-flex items-center justify-center">
+      {icon}
+    </span>
+  )
+
+  if (!href) {
+    return (
+      <span className="w-8 h-8 border border-border/40 text-secondary/40 inline-flex items-center justify-center cursor-not-allowed">
+        {icon}
+      </span>
+    )
+  }
+
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" aria-label={label}>
+      {content}
+    </a>
   )
 }

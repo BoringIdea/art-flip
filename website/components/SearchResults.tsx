@@ -49,7 +49,7 @@ export default function SearchResults({
     <div className="absolute top-full left-0 right-0 mt-1 bg-[#0f1115] border border-[#2a2f37] rounded-md shadow-lg z-50 max-h-96 overflow-y-auto">
       {loading && (
         <div className="p-4 text-center text-gray-400">
-          <div className="animate-spin w-5 h-5 border-2 border-[#3af73e] border-t-transparent rounded-full mx-auto mb-2"></div>
+          <div className="animate-spin w-5 h-5 border-2 border-[#16A34A] border-t-transparent rounded-full mx-auto mb-2"></div>
           Searching...
         </div>
       )}
@@ -91,7 +91,7 @@ export default function SearchResults({
                       }}
                     />
                   ) : null}
-                  <div className={`w-full h-full flex items-center justify-center text-xs font-bold text-[#3af73e] ${collection.base_uri ? 'hidden' : ''}`}>
+                  <div className={`w-full h-full flex items-center justify-center text-xs font-bold text-[#16A34A] ${collection.base_uri ? 'hidden' : ''}`}>
                     {collection.symbol?.slice(0, 2).toUpperCase() || 'N/A'}
                   </div>
                 </div>
