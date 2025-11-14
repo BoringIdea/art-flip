@@ -186,6 +186,20 @@ a {
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Ensure semantic text utility classes map to neutral palette */
+  .text-primary {
+    color: hsl(var(--text-primary)) !important;
+  }
+
+  .text-secondary {
+    color: hsl(var(--text-secondary)) !important;
+  }
+
+  .text-muted,
+  .text-muted-foreground {
+    color: hsl(var(--text-muted)) !important;
+  }
 }
 
 /* FLIP Design System Utility Classes */

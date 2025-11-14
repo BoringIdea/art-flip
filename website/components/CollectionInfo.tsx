@@ -152,7 +152,7 @@ export default function CollectionInfo({ collection }: { collection?: Collection
       <AlertDialog open={showInfoDialog} onOpenChange={setShowInfoDialog}>
         <AlertDialogContent className="bg-black border-white/20">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">Collection Info</AlertDialogTitle>
+            <AlertDialogTitle className="text-white">COLLECTION INFO</AlertDialogTitle>
             <AlertDialogDescription className="whitespace-pre-wrap text-white/70">
               {collection?.meta_data?.description || "No description available"}
             </AlertDialogDescription>

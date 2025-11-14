@@ -302,20 +302,20 @@ export default function CreationGuide() {
         <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet" />
       </Head>
       <main className="flex justify-center w-full max-w-[100vw] overflow-x-auto px-2 sm:px-6 lg:px-8 py-8 pt-20 bg-black">
-        <div className="max-w-4xl w-full mx-auto">
-          <div className="p-2 sm:p-8 w-full max-w-full">
-            <div className="flex justify-center mb-12">
-              <div className="flex items-center gap-3 text-[#4CAF50]">
+        <div className="max-w-5xl w-full mx-auto">
+          <div className="border border-border bg-bg-card/70 rounded-3xl p-4 sm:p-8">
+            <div className="flex justify-center mb-6">
+              <div className="flex items-center gap-3 text-secondary">
                 <span
                   onClick={() => setLanguage('en')}
-                  className={`cursor-pointer hover:text-[#45a049] transition-colors text-lg font-medium ${language === 'en' ? 'underline underline-offset-4' : ''}`}
+                  className={`cursor-pointer text-sm sm:text-base font-semibold tracking-[0.4em] ${language === 'en' ? 'text-white underline underline-offset-4 decoration-flip-primary' : 'text-secondary hover:text-white/80'}`}
                 >
                   EN
                 </span>
-                <span className="text-gray-400 text-lg">|</span>
+                <span className="text-secondary text-sm sm:text-base">|</span>
                 <span
                   onClick={() => setLanguage('zh')}
-                  className={`cursor-pointer hover:text-[#45a049] transition-colors text-lg font-medium ${language === 'zh' ? 'underline underline-offset-4' : ''}`}
+                  className={`cursor-pointer text-sm sm:text-base font-semibold tracking-[0.4em] ${language === 'zh' ? 'text-white underline underline-offset-4 decoration-flip-primary' : 'text-secondary hover:text-white/80'}`}
                 >
                   中文
                 </span>
@@ -323,20 +323,20 @@ export default function CreationGuide() {
             </div>
             <div
               className="
-                flip-typo space-y-10 text-[#4CAF50] leading-relaxed prose prose-green max-w-full w-full
-                prose-h1:!text-[#4CAF50] prose-h2:!text-[#4CAF50] prose-h3:!text-[#4CAF50] 
-                prose-p:text-white prose-li:text-white
+                flip-typo space-y-10 leading-relaxed prose max-w-full w-full text-white
+                prose-h1:text-white prose-h2:text-white prose-h3:text-white
+                prose-p:text-white/90 prose-li:text-white/80
                 prose-h1:text-3xl sm:prose-h1:text-5xl prose-h1:font-bold prose-h1:tracking-tight
                 prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:font-semibold prose-h2:tracking-wide
                 prose-h3:text-xl sm:prose-h3:text-2xl prose-h3:font-medium
                 prose-p:text-base sm:prose-p:text-lg prose-p:font-light prose-p:leading-8
                 prose-li:text-base sm:prose-li:text-lg prose-li:font-light prose-li:leading-7
-                prose-strong:font-semibold prose-strong:text-[#4CAF50]
+                prose-strong:font-semibold prose-strong:text-white
                 prose-th:text-base sm:prose-th:text-lg prose-td:text-base sm:prose-td:text-lg
-                prose-th:text-[#4CAF50] prose-td:text-white prose-th:font-medium
-                [--tw-prose-borders:#4CAF50/30]
-                prose-pre:bg-gray-900 prose-pre:text-[#4CAF50] prose-code:text-[#4CAF50]
-                prose-code:bg-gray-800 prose-code:px-1 prose-code:py-0.5 prose-code:rounded
+                prose-th:text-secondary prose-td:text-white
+                [--tw-prose-borders:rgba(255,255,255,0.15)]
+                prose-pre:bg-[#0d0d0d] prose-pre:text-white/80 prose-code:text-white/80
+                prose-code:bg-[#141414] prose-code:px-1 prose-code:py-0.5 prose-code:rounded
               "
               style={{ wordBreak: 'break-all' }}
             >
@@ -412,7 +412,7 @@ export default function CreationGuide() {
           </div>
         </div>
       </main>
-      <style jsx global>{`
+        <style jsx global>{`
         .flip-typo { font-family: 'Sora', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
         .flip-typo h1, .flip-typo h2, .flip-typo h3 {
           font-family: 'Space Grotesk', 'Sora', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -426,6 +426,7 @@ export default function CreationGuide() {
         }
         .flip-typo strong { font-weight: 600; }
         .flip-typo code, .flip-typo pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+        .flip-typo a { color: #e5e7eb; }
       `}</style>
     </>
   );

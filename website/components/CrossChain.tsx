@@ -643,14 +643,14 @@ export default function CrossChain({ contractAddress, collection }: CrossChainPr
                     {/* Receiver Address Input */}
                     <div className="space-y-3">
                       <div className="text-[11px] font-semibold uppercase tracking-[0.35em] text-secondary">Receiver Address</div>
-                      <div className="rounded border border-border/70 bg-black/30 p-3 space-y-3">
-                        <div className="flex flex-col sm:flex-row gap-2">
+                      <div className="rounded border border-border/70 bg-black/30 p-3 space-y-3 overflow-hidden">
+                        <div className="flex flex-col sm:flex-row gap-2 min-w-0">
                           <input
                             type="text"
                             value={receiverAddress}
                             onChange={handleReceiverChange}
                             placeholder="Enter receiver address (0x...)"
-                            className="flex-1 px-3 py-2 border border-border/60 bg-black/40 text-primary placeholder-secondary focus:border-flip-primary focus:outline-none"
+                            className="flex-1 px-3 py-2 border border-border/60 bg-black/40 text-primary placeholder-secondary focus:border-flip-primary focus:outline-none min-w-0"
                           />
                           <Button
                             variant="outline"
@@ -661,7 +661,7 @@ export default function CrossChain({ contractAddress, collection }: CrossChainPr
                             Use My Address
                           </Button>
                         </div>
-                        <div className="text-[11px] tracking-[0.2em] text-secondary">
+                        <div className="text-[11px] tracking-[0.2em] text-secondary break-words leading-relaxed">
                           {receiverAddress ? (
                             <>NFT will be sent to: {receiverAddress}</>
                           ) : (
@@ -751,7 +751,7 @@ export default function CrossChain({ contractAddress, collection }: CrossChainPr
                   <div className="p-4 space-y-3 border border-border bg-bg-card min-h-[600px]">
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-medium text-gray-300">
-                        Your Cross-Chain Transaction History
+                        YOUR CROSS-CHAIN TRANSACTION HISTORY
                       </h3>
                       {isTrackingCctx && (
                         <div className="flex items-center gap-2 text-xs text-blue-400">
