@@ -46,7 +46,7 @@ export const RecommendCollection = ({ collections }: RecommendCollectionProps) =
     <div className="px-4 sm:px-6 md:px-10">
       <div className="relative w-full overflow-hidden border border-border bg-black/40 rounded-3xl">
         <img
-          src={collection?.banner_image || "/Drug-banner.png"}
+          src={collection?.meta_data?.banner_image || "/Drug-banner.png"}
           className="absolute inset-0 w-full h-full object-cover"
           alt={collection?.name || 'Featured Collection'}
         />
