@@ -170,86 +170,111 @@ export default function Mint({ contractAddress, collection }: MintProps) {
     setIsClient(true);
   }, []);
 
+  const formattedMintPrice = formatNumberWithMaxDecimalsAndRounding(
+    ethers.formatEther((mintPrice ?? fallbackMintPrice ?? 0).toString())
+  );
+
   return (
-    <div className="flex flex-col lg:flex-row w-full">
-      {/* Left Section: Image + Mint Controls */}
-      <div className="flex flex-col lg:w-1/2 p-4 sm:p-8 pb-20 sm:pb-24">
-        {/* Collection Image */}
-        <div className="flex justify-center mb-4 lg:mb-6">
-          {collectionImage && (
-            <div className="w-[250px] h-[250px] lg:w-[320px] lg:h-[320px] bg-gray-800 rounded-lg overflow-hidden flex items-center justify-center">
-              <img
-                src={collectionImage}
-                alt={collection?.name}
-                className="w-full h-full object-cover"
-              />
+    <div className="flex flex-col lg:flex-row w-full gap-6 border border-border bg-bg-card/30 p-4 sm:p-6">
+      {/* Left Section */}
+      <div className="flex flex-col lg:w-1/2 gap-6 pb-12">
+        <div className="border border-border bg-black/40 p-4 flex items-center justify-center">
+          {collectionImage ? (
+            <div className="w-[240px] h-[240px] sm:w-[300px] sm:h-[300px] overflow-hidden">
+              <img src={collectionImage} alt={collection?.name} className="w-full h-full object-cover" />
             </div>
+          ) : (
+            <div className="text-secondary uppercase tracking-[0.3em] text-xs">No preview</div>
           )}
         </div>
 
-        {/* Mint Controls */}
-        <div className="bg-neutral-900 rounded-xl p-6 flex flex-col gap-4 shadow-lg border border-neutral-800">
-          {/* Mint Price & Fee */}
+        <div className="border border-border bg-black/60 p-5 flex flex-col gap-4">
           <div>
-            <div className="flex items-end gap-2">
-              <span className="text-lg font-semibold text-white">Mint Price:</span>
-              <span className="text-2xl font-bold text-green-400">{formatNumberWithMaxDecimalsAndRounding(ethers.formatEther((mintPrice ?? fallbackMintPrice ?? 0).toString()))} {getChainSymbol(chainId)}</span>
+            <p className="text-[11px] uppercase tracking-[0.35em] text-secondary">Mint Price</p>
+            <div className="flex flex-wrap items-baseline gap-2">
+              <span className="text-3xl font-bold text-white">{formattedMintPrice}</span>
+              <span className="text-sm text-secondary">{getChainSymbol(chainId)}</span>
             </div>
-            <div className="text-xs text-gray-400 mt-1">
-              (Include Fee: {collection?.creator_fee ? (Number(ethers.formatEther(collection?.creator_fee.toString())) * 100).toFixed(2) : '0'}%)
-            </div>
+            <p className="text-[10px] uppercase tracking-[0.25em] text-secondary mt-1">
+              Includes Fee:{" "}
+              {collection?.creator_fee
+                ? (Number(ethers.formatEther(collection?.creator_fee.toString())) * 100).toFixed(2)
+                : "0"}
+              %
+            </p>
           </div>
 
-          {/* Mint 按钮 */}
-          <button className="w-full bg-green-400 hover:bg-green-300 text-black font-bold py-3 rounded-lg text-lg transition" onClick={() => mint()}>
-            Mint
-          </button>
+          <Button
+            onClick={() => mint()}
+            disabled={isPending}
+            className="w-full h-12 text-black bg-flip-primary border border-flip-primary hover:bg-[#1FB455]"
+          >
+            {isPending ? "Processing..." : "Mint"}
+          </Button>
 
-          {/* 数量选择 & 预计花费 */}
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-0">
-              <div className="flex items-center bg-neutral-800 rounded-lg px-2 py-1">
-                <button className="px-2 text-xl" onClick={() => setMintAmount(prev => Math.max(1, prev - 1))}>-</button>
-                <span className="mx-2 text-lg">{mintAmount}</span>
-                <button className="px-2 text-xl" onClick={() => setMintAmount(prev => Math.min(20, prev + 1))}>+</button>
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center border border-border">
+                <button
+                  className="px-4 py-2 text-xl text-secondary hover:text-white"
+                  onClick={() => setMintAmount((prev) => Math.max(1, prev - 1))}
+                >
+                  -
+                </button>
+                <span className="px-6 py-2 text-2xl font-semibold text-white border-x border-border">
+                  {mintAmount}
+                </span>
+                <button
+                  className="px-4 py-2 text-xl text-secondary hover:text-white"
+                  onClick={() => setMintAmount((prev) => Math.min(20, prev + 1))}
+                >
+                  +
+                </button>
               </div>
-              <div className="bg-neutral-800/50 rounded-lg px-4 py-2 w-full sm:w-auto">
-                <div className="text-sm text-gray-300">
-                  Expected Cost: <span className="font-semibold text-green-400">
-                    {mintAmount > 1 ?
-                      formatNumberWithMaxDecimalsAndRounding(Number(getBatchBuyPrice(
-                        collection?.max_supply?.toString() || '0',
-                        collection?.current_supply?.toString() || '0',
-                        collection?.initial_price?.toString() || '0',
-                        mintAmount,
-                        collection?.creator_fee?.toString() || '0'
-                      )) / 1e18, 2) :
-                      formatNumberWithMaxDecimalsAndRounding(Number((mintPrice ?? fallbackMintPrice ?? 0).toString()) / 1e18, 2)
-                    }
-                  </span> {getChainSymbol(chainId)}
-                </div>
+              <div className="border border-border bg-black/30 px-4 py-3 w-full sm:w-auto">
+                <p className="text-[11px] uppercase tracking-[0.3em] text-secondary mb-1">Expected Cost</p>
+                <p className="text-lg font-semibold text-white">
+                  {mintAmount > 1
+                    ? formatNumberWithMaxDecimalsAndRounding(
+                        Number(
+                          getBatchBuyPrice(
+                            collection?.max_supply?.toString() || "0",
+                            collection?.current_supply?.toString() || "0",
+                            collection?.initial_price?.toString() || "0",
+                            mintAmount,
+                            collection?.creator_fee?.toString() || "0"
+                          )
+                        ) / 1e18,
+                        2
+                      )
+                    : formatNumberWithMaxDecimalsAndRounding(
+                        Number((mintPrice ?? fallbackMintPrice ?? 0).toString()) / 1e18,
+                        2
+                      )}{" "}
+                  <span className="text-sm text-secondary">{getChainSymbol(chainId)}</span>
+                </p>
               </div>
             </div>
+
             <input
               type="range"
               min="1"
               max="20"
               value={mintAmount}
               onChange={(e) => setMintAmount(Number(e.target.value))}
-              className="w-full h-2 bg-neutral-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-green-400 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-green-400"
+              className="w-full h-2 bg-black/60 border border-border appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-flip-primary [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-flip-primary"
             />
           </div>
         </div>
-        
-        {/* Progress Bar */}
-        <div className="mt-4">
+
+        <div className="border border-border bg-black/40 p-4">
           <Progress 
             value={progress} 
             className="w-full h-3 bg-neutral-800" 
             indicatorClassName="bg-green-400"
           />
           <p className="text-xs sm:text-sm text-gray-600 mt-2">
-            Minted: {collection?.total_supply?.toString()} / {collection?.max_supply?.toString()}
+            MINTED: {collection?.total_supply?.toString()} / {collection?.max_supply?.toString()}
             <span className="ml-2 text-gray-400">
               (
               {collection?.max_supply && Number(collection?.max_supply) > 0
@@ -265,28 +290,28 @@ export default function Mint({ contractAddress, collection }: MintProps) {
         </div>
       </div>
 
-      {/* Right Section: Bonding Curve Chart (Desktop only) */}
-      <div className="hidden lg:flex lg:w-1/2 border-l border-[rgba(255,255,255,0.2)] p-4 sm:p-8 pb-20 sm:pb-24">
-        <div className="w-full">
-          <PriceChart collection={{
-            max_supply: collection?.max_supply,
-            initial_price: collection?.initial_price,
-            current_supply: collection?.current_supply,
-            floor_price: collection?.floor_price,
-          }} chainId={chainId} />
+      <div className="w-full lg:w-1/2 flex flex-col gap-4">
+        <div className="border border-border bg-black/40 p-4">
+          <p className="text-[11px] uppercase tracking-[0.35em] text-secondary">Analytics</p>
+          <h2 className="text-2xl font-semibold text-white">MINT PRICE CURVE</h2>
+          <p className="text-sm text-secondary mt-2">
+            Based on the set price, supply, and current mint position.
+          </p>
         </div>
-      </div>
-
-      {/* Mobile Chart Section */}
-      <div className="lg:hidden">
-        <div className="my-6 sm:my-8 h-px bg-white/30"></div>
-        <div className="p-4 sm:p-8 pb-32 sm:pb-40">
-          <PriceChart collection={{
-            max_supply: collection?.max_supply,
-            initial_price: collection?.initial_price,
-            current_supply: collection?.current_supply,
-            floor_price: collection?.floor_price,
-          }} chainId={chainId} />
+        <div className="h-[620px] flex flex-col sm:mb-12 border border-border bg-black/20 overflow-hidden p-4">
+          <div className="relative w-full flex-1">
+            <div className="absolute inset-0 overflow-hidden pr-2 pb-6">
+              <PriceChart
+                collection={{
+                  max_supply: collection?.max_supply,
+                  initial_price: collection?.initial_price,
+                  current_supply: collection?.current_supply,
+                  floor_price: collection?.floor_price,
+                }}
+                chainId={chainId}
+              />
+            </div>
+          </div>
         </div>
       </div>
 

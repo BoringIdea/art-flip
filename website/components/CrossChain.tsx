@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import useSWR from 'swr';
 import { 
   useAccount, 
@@ -11,6 +11,7 @@ import {
 } from "wagmi";
 import { parseEther } from "viem";
 import { Button } from "./ui/button";
+import { cn } from "@/lib/utils";
 import TransactionDialog from "@/components/shared/TransactionDialog";
 import { useTransactionDialog } from "@/src/hooks/useTransactionDialog";
 import { Collection } from "@/src/api/types";
@@ -18,8 +19,6 @@ import { useCrossChainStatus } from "@/src/api";
 import { getNFTsByOwnerForCollection } from "@/src/api";
 import Loading from './ui/Loading';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
-import * as Popover from '@radix-ui/react-popover';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CrosschainHistory from './CrosschainHistory';
 import { defaultCCTXTracker, CCTXRecord } from '@/lib/cctxTracker';
 import { getChainName } from '@/lib/chains';
@@ -65,6 +64,71 @@ const DEFAULT_CROSS_CHAIN_GAS_FEE = parseEther("0.001"); // 0.001 ETH
 const DEFAULT_GATEWAY_ADDRESS = "0x0c487a766110c85d301d96e33579c5b317fa4995";
 const DEFAULT_GAS_LIMIT = BigInt(12000000);
 
+const tabs = [
+  { key: 'transfer', label: 'Transfer' },
+  { key: 'history', label: 'History' },
+] as const;
+
+const TabsContext = React.createContext<{ value: string; onValueChange: (value: string) => void } | null>(null);
+
+function Tabs({
+  value,
+  onValueChange,
+  children,
+}: {
+  value: string;
+  onValueChange: (value: string) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <TabsContext.Provider value={{ value, onValueChange }}>
+      {children}
+    </TabsContext.Provider>
+  );
+}
+
+function TabsList({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <div className={className}>{children}</div>;
+}
+
+function TabsTrigger({
+  value,
+  children,
+  className,
+}: {
+  value: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const context = React.useContext(TabsContext);
+  if (!context) return null;
+  const isActive = context.value === value;
+  const activeClasses = isActive ? "text-flip-primary bg-bg-tertiary border-l-2 border-flip-primary" : "text-secondary border-l-2 border-transparent";
+  return (
+    <button
+      type="button"
+      className={cn("w-full text-left uppercase tracking-[0.3em] text-[11px] px-4 py-4", activeClasses, className)}
+      onClick={() => context.onValueChange(value)}
+    >
+      {children}
+    </button>
+  );
+}
+
+function TabsContent({
+  value,
+  children,
+  className,
+}: {
+  value: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const context = React.useContext(TabsContext);
+  if (!context || context.value !== value) return null;
+  return <div className={className}>{children}</div>;
+}
+
 const getDestinationAddress = (chainId: number) => {
   if (chainId === 97) {
     // cross to base
@@ -87,14 +151,13 @@ export default function CrossChain({ contractAddress, collection }: CrossChainPr
   const [selectedTokenId, setSelectedTokenId] = useState<string>('');
   const [receiverAddress, setReceiverAddress] = useState<string>('');
   const [isTransferring, setIsTransferring] = useState(false);
-  const [sourceChainDropdownOpen, setSourceChainDropdownOpen] = useState(false);
-  const [targetChainDropdownOpen, setTargetChainDropdownOpen] = useState(false);
   const [tokenDropdownOpen, setTokenDropdownOpen] = useState(false);
   const [cctxData, setCctxData] = useState<CCTXRecord | null>(null);
   const [isTrackingCctx, setIsTrackingCctx] = useState(false);
   const [cctxHistory, setCctxHistory] = useState<CCTXRecord[]>([]);
   const [pendingApprovalTokenId, setPendingApprovalTokenId] = useState<string | null>(null);
   const [isApproving, setIsApproving] = useState(false);
+  const tokenDropdownRef = useRef<HTMLDivElement>(null);
   
   // Contract interaction hooks
   const { data: hash, writeContract, isError: isWriteContractError, error: writeContractError, isPending } = useWriteContract();
@@ -187,6 +250,17 @@ export default function CrossChain({ contractAddress, collection }: CrossChainPr
     }
   }, [crossChainStatus, isTrackingCctx]);
 
+  useEffect(() => {
+    if (!tokenDropdownOpen) return;
+    const handleClick = (event: MouseEvent) => {
+      if (tokenDropdownRef.current && !tokenDropdownRef.current.contains(event.target as Node)) {
+        setTokenDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [tokenDropdownOpen]);
+
   // Handle transaction errors
   useEffect(() => {
     if (isError) {
@@ -246,7 +320,6 @@ export default function CrossChain({ contractAddress, collection }: CrossChainPr
   const handleSourceChainSelect = (chainKey: string) => {
     const selectedChain = CHAINS[chainKey];
     setSourceChain(selectedChain);
-    setSourceChainDropdownOpen(false);
     // Reset selected token when source chain changes
     setSelectedTokenId('');
     setTokenDropdownOpen(false);
@@ -254,7 +327,6 @@ export default function CrossChain({ contractAddress, collection }: CrossChainPr
   
   const handleTargetChainSelect = (chainKey: string) => {
     setTargetChain(CHAINS[chainKey]);
-    setTargetChainDropdownOpen(false);
   };
   
   // Handle token selection
@@ -371,319 +443,304 @@ export default function CrossChain({ contractAddress, collection }: CrossChainPr
   };
   
   return (
-    <div className="flex flex-col pb-32">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-4 border-b border-[#444] gap-2">
-        <h1 className="text-base sm:text-lg text-[#aaa]">Cross-Chain Transfer</h1>
-        <div className="text-sm text-gray-400">
-          Transfer your NFTs between chains
-        </div>
-      </div>
-      
-      {/* Tabs */}
-      <div className="border-b border-[#444]">
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'transfer' | 'history')}>
-          <TabsList className="border-b border-[#444] bg-transparent w-full justify-start">
-            <TabsTrigger
-              value="transfer"
-              className="text-lg px-6 py-3 data-[state=active]:text-[#3af73e] data-[state=active]:border-b-2 data-[state=active]:border-[#3af73e] data-[state=active]:shadow-none data-[state=active]:bg-transparent rounded-none"
-            >
-              Transfer
-            </TabsTrigger>
-            <TabsTrigger
-              value="history"
-              className="text-lg px-6 py-3 data-[state=active]:text-[#3af73e] data-[state=active]:border-b-2 data-[state=active]:border-[#3af73e] data-[state=active]:shadow-none data-[state=active]:bg-transparent rounded-none"
-            >
-              History
-            </TabsTrigger>
+    <div className="px-3 sm:px-6 pb-24 mt-4">
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'transfer' | 'history')}>
+        <div className="border border-border bg-bg-card flex flex-col lg:flex-row">
+          <TabsList className="lg:w-40 border-b lg:border-b-0 lg:border-r border-border flex lg:flex-col">
+            {tabs.map((tab) => (
+              <TabsTrigger key={tab.key} value={tab.key}>
+                {tab.label}
+              </TabsTrigger>
+            ))}
           </TabsList>
-          
-          <TabsContent value="transfer" className="m-0">
+          <div className="flex-1">
+          <TabsContent value="transfer" className="p-4 lg:p-6">
             {/* Main Content */}
-            <div className="flex flex-col lg:flex-row gap-6 mt-3 px-4">
+            <div className="flex flex-col lg:flex-row gap-6 mt-3">
               {/* Left Section: Operation Controls */}
               <div className="lg:w-1/2 w-full flex justify-center lg:justify-start">
                 <div className="w-full max-w-md">
-                  <div className="p-4 space-y-4 rounded-lg border border-[#444] bg-[#18191c] overflow-hidden">
-        {/* Source Chain Selection */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-gray-300">Source Chain</label>
-            {address && sourceChain?.id && chainId !== sourceChain.id && (
-              <span className="text-xs text-yellow-400 bg-yellow-500/10 px-2 py-1 rounded">
-                Switch network required
-              </span>
-            )}
-          </div>
-          {/* Temporarily disable source chain selection; keep UI but block interaction */}
-          <Popover.Root open={false} onOpenChange={() => {}}>
-            <Popover.Trigger asChild>
-              <button 
-                className="w-full flex items-center justify-between p-3 rounded-lg border border-[#444] bg-[#18191c] transition-colors opacity-70 cursor-not-allowed"
-                disabled
-                aria-disabled="true"
-                title="Source chain selection is temporarily disabled"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-lg">{sourceChain.icon}</span>
-                  <span className="text-white font-medium">{sourceChain.name}</span>
-                  {isSwitchingChain && (
-                    <div className="w-4 h-4 border-2 border-green-400 border-t-transparent rounded-full animate-spin"></div>
-                  )}
-                </div>
-                <ChevronDownIcon className="w-4 h-4 text-gray-400" />
-              </button>
-            </Popover.Trigger>
-            <Popover.Portal>
-              <Popover.Content sideOffset={8} className="z-50 bg-neutral-900 rounded-xl shadow-2xl p-2 w-full max-w-sm border border-neutral-800">
-                {/* Options disabled temporarily */}
-                <Popover.Arrow className="fill-neutral-900" />
-              </Popover.Content>
-            </Popover.Portal>
-          </Popover.Root>
-          
-          {/* Source Chain Contract Address */}
-          {sourceChainLoading ? (
-            <div className="mt-2 p-2 bg-[#1a1a1a] rounded border border-[#333]">
-              <div className="text-xs text-gray-400 mb-1">Contract Address:</div>
-              <div className="text-xs text-yellow-400">Loading...</div>
-            </div>
-          ) : sourceChainError ? (
-            <div className="mt-2 p-2 bg-red-500/10 rounded border border-red-500/30">
-              <div className="text-xs text-gray-400 mb-1">Contract Address:</div>
-              <div className="text-xs text-red-400">Error: Failed to calculate address</div>
-            </div>
-          ) : sourceChainContractAddress ? (
-            <div className="mt-2 p-2 bg-[#1a1a1a] rounded border border-[#333]">
-              <div className="text-xs text-gray-400 mb-1">Contract Address:</div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs text-white font-mono break-all">
-                  {sourceChainContractAddress as string}
-                </span>
-                <button
-                  onClick={() => navigator.clipboard.writeText(sourceChainContractAddress as string)}
-                  className="text-xs text-green-400 hover:text-green-300 px-2 py-1 bg-green-500/10 rounded transition-colors flex-shrink-0"
-                >
-                  Copy
-                </button>
-              </div>
-            </div>
-          ) : null}
-        </div>
-        
-        {/* Transfer Direction Arrow */}
-        <div className="flex justify-center">
-          {/* Temporarily disable chain swap */}
-          <button 
-            onClick={(e) => e.preventDefault()}
-            className="w-10 h-8 rounded-lg bg-[#3af73e] border border-[#3af73e] transition-colors flex items-center justify-center opacity-60 cursor-not-allowed"
-            disabled
-            aria-disabled="true"
-            title="Chain swap is temporarily disabled"
-          >
-            <span className="text-black text-sm">↓</span>
-          </button>
-        </div>
-        
-        {/* Target Chain Selection (temporarily disabled) */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-300">Target Chain</label>
-          <Popover.Root open={false} onOpenChange={() => {}}>
-            <Popover.Trigger asChild>
-              <button className="w-full flex items-center justify-between p-3 rounded-lg border border-[#444] bg-[#18191c] transition-colors opacity-70 cursor-not-allowed" disabled aria-disabled="true" title="Target chain selection is temporarily disabled">
-                <div className="flex items-center gap-3">
-                  <span className="text-lg">{targetChain.icon}</span>
-                  <span className="text-white font-medium">{targetChain.name}</span>
-                </div>
-                <ChevronDownIcon className="w-4 h-4 text-gray-400" />
-              </button>
-            </Popover.Trigger>
-            <Popover.Portal>
-              <Popover.Content sideOffset={8} className="z-50 bg-neutral-900 rounded-xl shadow-2xl p-2 w-full max-w-sm border border-neutral-800">
-                {/* Options disabled temporarily */}
-                <Popover.Arrow className="fill-neutral-900" />
-              </Popover.Content>
-            </Popover.Portal>
-          </Popover.Root>
-          
-          {/* Target Chain Contract Address */}
-          {targetChainLoading ? (
-            <div className="mt-2 p-2 bg-[#1a1a1a] rounded border border-[#333]">
-              <div className="text-xs text-gray-400 mb-1">Contract Address:</div>
-              <div className="text-xs text-yellow-400">Loading...</div>
-            </div>
-          ) : targetChainContractAddress ? (
-            <div className="mt-2 p-2 bg-[#1a1a1a] rounded border border-[#333]">
-              <div className="text-xs text-gray-400 mb-1">Contract Address:</div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs text-white font-mono break-all">
-                  {targetChainContractAddress as string}
-                </span>
-                <button
-                  onClick={() => navigator.clipboard.writeText(targetChainContractAddress as string)}
-                  className="text-xs text-green-400 hover:text-green-300 px-2 py-1 bg-green-500/10 rounded transition-colors flex-shrink-0"
-                >
-                  Copy
-                </button>
-              </div>
-            </div>
-          ) : null}
-        </div>
-        
-        {/* Token ID Selection */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-300">Select NFT</label>
-          <Popover.Root open={tokenDropdownOpen} onOpenChange={setTokenDropdownOpen}>
-            <Popover.Trigger asChild>
-              <button className="w-full flex items-center justify-between p-3 rounded-lg border border-[#444] bg-[#18191c] hover:bg-[#222] transition-colors" disabled={sourceChainLoading || isLoadingTokens}>
-                <div className="flex items-center gap-3">
-                  {(() => {
-                    const selected = userNFTs.find((n: any) => n.tokenId === selectedTokenId);
-                    return selected?.image ? (
-                      <div className="w-6 h-6 rounded overflow-hidden bg-neutral-800 flex-shrink-0">
-                        <img src={selected.image} alt={`NFT #${selectedTokenId}`} className="w-full h-full object-cover" />
+                  <div className="p-5 space-y-6 border border-border/80 bg-gradient-to-b from-black/80 via-bg-card to-bg-card/90 overflow-hidden">
+                    {/* Source Chain Selection */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.35em] text-secondary">
+                        <span>Source Chain</span>
+                        {address && sourceChain?.id && chainId !== sourceChain.id && (
+                          <span className="text-[10px] text-yellow-300 bg-yellow-500/10 px-3 py-1 tracking-[0.25em]">
+                            Switch required
+                          </span>
+                        )}
                       </div>
-                    ) : (
-                      <span className="text-lg">🎨</span>
-                    );
-                  })()}
-                  <span className="text-white font-medium">
-                    {selectedTokenId ? `NFT #${selectedTokenId}` : 'Select NFT to transfer'}
-                  </span>
-                </div>
-                <ChevronDownIcon className="w-4 h-4 text-gray-400" />
-              </button>
-            </Popover.Trigger>
-            <Popover.Portal>
-              <Popover.Content sideOffset={8} className="z-50 bg-neutral-900 rounded-xl shadow-2xl p-2 w-full max-w-md border border-neutral-800 max-h-60 overflow-y-auto">
-                {sourceChainLoading || isLoadingTokens ? (
-                  <div className="p-4 text-center">
-                    <Loading />
-                  </div>
-                ) : userNFTs.length === 0 ? (
-                  <div className="p-4 text-center text-gray-400">
-                    No NFTs found
-                  </div>
-                ) : (
-                  userNFTs.map((nft: any) => (
-                    <button
-                      key={nft.tokenId}
-                      onClick={() => handleTokenSelect(nft.tokenId)}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-neutral-800 transition-colors text-left"
-                    >
-                      {nft.image ? (
-                        <div className="w-8 h-8 rounded overflow-hidden bg-neutral-800 flex-shrink-0">
-                          <img src={nft.image} alt={nft.name} className="w-full h-full object-cover" />
+                      <div className="space-y-3 rounded border border-flip-primary/40 bg-black/30 p-4">
+                        <button
+                          className="w-full flex items-center justify-between px-4 py-3 border border-flip-primary/50 bg-black/40 text-left uppercase tracking-[0.2em] text-primary/80 cursor-not-allowed"
+                          disabled
+                          aria-disabled="true"
+                          title="Source chain selection is temporarily disabled"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-xl">{sourceChain.icon}</span>
+                            <span className="text-sm text-primary tracking-[0.2em]">{sourceChain.name}</span>
+                            {isSwitchingChain && (
+                              <div className="w-4 h-4 border border-flip-primary border-t-transparent rounded-full animate-spin" />
+                            )}
+                          </div>
+                          <ChevronDownIcon className="w-4 h-4 text-secondary" />
+                        </button>
+
+                        {/* Source Chain Contract Address */}
+                        <div className="text-[11px] uppercase tracking-[0.3em] text-secondary">Contract Address</div>
+                        {sourceChainLoading ? (
+                          <div className="px-3 py-2 border border-border/70 bg-black/40 text-[11px] text-yellow-400 tracking-[0.2em]">
+                            Loading...
+                          </div>
+                        ) : sourceChainError ? (
+                          <div className="px-3 py-2 border border-red-500/30 bg-red-500/5 text-[11px] text-red-400 tracking-[0.2em]">
+                            Error: Failed to calculate address
+                          </div>
+                        ) : sourceChainContractAddress ? (
+                          <div className="flex items-center gap-2 px-3 py-2 border border-flip-primary/40 bg-black/40">
+                            <span className="text-xs text-white font-mono break-all flex-1">
+                              {sourceChainContractAddress as string}
+                            </span>
+                            <button
+                              onClick={() => navigator.clipboard.writeText(sourceChainContractAddress as string)}
+                              className="text-[10px] uppercase tracking-[0.3em] text-flip-primary px-3 py-1 border border-flip-primary/50 bg-flip-primary/10 hover:bg-flip-primary/20 transition-colors"
+                            >
+                              Copy
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="px-3 py-2 border border-border/70 bg-black/40 text-[11px] tracking-[0.2em] text-secondary">
+                            Not available
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Transfer Direction Arrow */}
+                    <div className="flex justify-center">
+                      <button
+                        onClick={(e) => e.preventDefault()}
+                        className="w-12 h-12 border border-flip-primary/30 bg-black/40 text-flip-primary text-xl flex items-center justify-center tracking-[0.3em] cursor-not-allowed"
+                        disabled
+                        aria-disabled="true"
+                        title="Chain swap is temporarily disabled"
+                      >
+                        ↓
+                      </button>
+                    </div>
+
+                    {/* Target Chain Selection */}
+                    <div className="space-y-3">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.35em] text-secondary">Target Chain</div>
+                      <div className="space-y-3 rounded border border-flip-primary/40 bg-black/30 p-4">
+                        <button
+                          className="w-full flex items-center justify-between px-4 py-3 border border-flip-primary/50 bg-black/40 text-left uppercase tracking-[0.2em] text-primary/80 cursor-not-allowed"
+                          disabled
+                          aria-disabled="true"
+                          title="Target chain selection is temporarily disabled"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-xl">{targetChain.icon}</span>
+                            <span className="text-sm text-primary tracking-[0.2em]">{targetChain.name}</span>
+                          </div>
+                          <ChevronDownIcon className="w-4 h-4 text-secondary" />
+                        </button>
+
+                        <div className="text-[11px] uppercase tracking-[0.3em] text-secondary">Contract Address</div>
+                        {targetChainLoading ? (
+                          <div className="px-3 py-2 border border-border/70 bg-black/40 text-[11px] text-yellow-400 tracking-[0.2em]">
+                            Loading...
+                          </div>
+                        ) : targetChainContractAddress ? (
+                          <div className="flex items-center gap-2 px-3 py-2 border border-flip-primary/40 bg-black/40">
+                            <span className="text-xs text-white font-mono break-all flex-1">
+                              {targetChainContractAddress as string}
+                            </span>
+                            <button
+                              onClick={() => navigator.clipboard.writeText(targetChainContractAddress as string)}
+                              className="text-[10px] uppercase tracking-[0.3em] text-flip-primary px-3 py-1 border border-flip-primary/50 bg-flip-primary/10 hover:bg-flip-primary/20 transition-colors"
+                            >
+                              Copy
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="px-3 py-2 border border-border/70 bg-black/40 text-[11px] tracking-[0.2em] text-secondary">
+                            Not available
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Token ID Selection */}
+                    <div className="space-y-3">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.35em] text-secondary">Select NFT</div>
+                      <div className="relative" ref={tokenDropdownRef}>
+                        <button
+                          className="w-full flex items-center justify-between px-4 py-3 border border-border/70 bg-black/40 hover:border-flip-primary/50 transition-colors"
+                          disabled={sourceChainLoading || isLoadingTokens}
+                          onClick={() => !sourceChainLoading && !isLoadingTokens && setTokenDropdownOpen(prev => !prev)}
+                          type="button"
+                        >
+                          <div className="flex items-center gap-3">
+                            {(() => {
+                              const selected = userNFTs.find((n: any) => n.tokenId === selectedTokenId);
+                              return selected?.image ? (
+                                <div className="w-7 h-7 bg-bg-card overflow-hidden flex-shrink-0 border border-border/70">
+                                  <img src={selected.image} alt={`NFT #${selectedTokenId}`} className="w-full h-full object-cover" />
+                                </div>
+                              ) : (
+                                <span className="text-lg">🎨</span>
+                              );
+                            })()}
+                            <span className="text-primary font-medium text-sm tracking-[0.1em]">
+                              {selectedTokenId ? `NFT #${selectedTokenId}` : 'Select NFT to transfer'}
+                            </span>
+                          </div>
+                          <ChevronDownIcon className="w-4 h-4 text-secondary" />
+                        </button>
+                        {tokenDropdownOpen && (
+                          <div className="absolute z-50 mt-2 w-full max-h-60 overflow-y-auto border border-border bg-black/95 p-2 space-y-2">
+                            {sourceChainLoading || isLoadingTokens ? (
+                              <div className="p-4 text-center text-secondary">
+                                <Loading />
+                              </div>
+                            ) : userNFTs.length === 0 ? (
+                              <div className="p-4 text-center text-secondary text-sm tracking-[0.2em] uppercase">
+                                No NFTs found
+                              </div>
+                            ) : (
+                              userNFTs.map((nft: any) => (
+                                <button
+                                  key={nft.tokenId}
+                                  onClick={() => {
+                                    handleTokenSelect(nft.tokenId);
+                                    setTokenDropdownOpen(false);
+                                  }}
+                                  className="w-full flex items-center gap-3 p-3 border border-border/60 bg-black/40 text-left hover:border-flip-primary/40 hover:bg-black/60 transition-colors"
+                                  type="button"
+                                >
+                                  {nft.image ? (
+                                    <div className="w-9 h-9 border border-border/70 bg-bg-card overflow-hidden flex-shrink-0">
+                                      <img src={nft.image} alt={nft.name} className="w-full h-full object-cover" />
+                                    </div>
+                                  ) : (
+                                    <span className="text-lg">🎨</span>
+                                  )}
+                                  <div>
+                                    <div className="text-sm text-primary font-medium">{nft.name || `NFT #${nft.tokenId}`}</div>
+                                    <div className="text-[11px] text-secondary tracking-[0.2em]">#{nft.tokenId}</div>
+                                  </div>
+                                </button>
+                              ))
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Receiver Address Input */}
+                    <div className="space-y-3">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.35em] text-secondary">Receiver Address</div>
+                      <div className="rounded border border-border/70 bg-black/30 p-3 space-y-3">
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <input
+                            type="text"
+                            value={receiverAddress}
+                            onChange={handleReceiverChange}
+                            placeholder="Enter receiver address (0x...)"
+                            className="flex-1 px-3 py-2 border border-border/60 bg-black/40 text-primary placeholder-secondary focus:border-flip-primary focus:outline-none"
+                          />
+                          <Button
+                            variant="outline"
+                            onClick={fillSelfAddress}
+                            disabled={!address}
+                            className="px-4 py-2 text-[11px] tracking-[0.25em] uppercase bg-black/40 border-flip-primary/40 text-primary hover:bg-black/60 w-full sm:w-auto"
+                          >
+                            Use My Address
+                          </Button>
                         </div>
+                        <div className="text-[11px] tracking-[0.2em] text-secondary">
+                          {receiverAddress ? (
+                            <>NFT will be sent to: {receiverAddress}</>
+                          ) : (
+                            <>If empty, NFT will be sent to {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'your address'}</>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Transfer Summary */}
+                    {selectedTokenId && (
+                      <div className="p-4 border border-flip-primary/30 bg-gradient-to-b from-black/50 to-bg-card/30 space-y-2 text-sm tracking-[0.08em] uppercase text-secondary">
+                        <div className="flex items-center justify-between text-[11px] tracking-[0.3em]">
+                          <span>Transfer Summary</span>
+                          <span className="text-flip-primary">Ready</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 text-xs text-primary">
+                          <div>
+                            <p className="text-secondary/70 text-[10px] tracking-[0.2em] mb-1">From</p>
+                            <p>{sourceChain.name}</p>
+                          </div>
+                          <div>
+                            <p className="text-secondary/70 text-[10px] tracking-[0.2em] mb-1">To</p>
+                            <p>{targetChain.name}</p>
+                          </div>
+                          <div>
+                            <p className="text-secondary/70 text-[10px] tracking-[0.2em] mb-1">Token</p>
+                            <p>#{selectedTokenId}</p>
+                          </div>
+                          <div>
+                            <p className="text-secondary/70 text-[10px] tracking-[0.2em] mb-1">Receiver</p>
+                            <p>
+                              {(() => {
+                                const finalReceiver = receiverAddress || address || '';
+                                return finalReceiver ? `${finalReceiver.slice(0, 6)}...${finalReceiver.slice(-4)}` : 'Not set';
+                              })()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-[10px] tracking-[0.3em] text-secondary/80">
+                          Estimated time: <span className="text-primary ml-2">2-5 minutes</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Transfer Button */}
+                    <Button
+                      onClick={handleCrossChainTransfer}
+                      disabled={!selectedTokenId || isTransferring || isApproving || isPending || !address || isSwitchingChain}
+                      className="w-full border border-flip-primary/60 bg-flip-primary text-black hover:bg-[#1FB455]"
+                    >
+                      {isSwitchingChain ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                          Switching Network...
+                        </div>
+                      ) : isApproving || (isPending && pendingApprovalTokenId !== null) ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                          Approving...
+                        </div>
+                      ) : isTransferring || (isPending && pendingApprovalTokenId === null) ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                          Transferring...
+                        </div>
+                      ) : address && sourceChain?.id && chainId !== sourceChain.id ? (
+                        `Switch to ${sourceChain.name} & Transfer`
                       ) : (
-                        <span className="text-lg">🎨</span>
+                        (!isApproved ? 'Approve & Transfer' : 'Cross-Chain Transfer')
                       )}
-                      <span className="text-white font-medium">{nft.name}</span>
-                    </button>
-                  ))
-                )}
-                <Popover.Arrow className="fill-neutral-900" />
-              </Popover.Content>
-            </Popover.Portal>
-          </Popover.Root>
-        </div>
-        
-        {/* Receiver Address Input */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-300">Receiver Address</label>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <input
-              type="text"
-              value={receiverAddress}
-              onChange={handleReceiverChange}
-              placeholder="Enter receiver address (0x...)"
-              className="flex-1 p-3 rounded-lg border border-[#444] bg-[#18191c] text-white placeholder-gray-400 focus:border-[#3af73e] focus:outline-none transition-colors w-full"
-            />
-            <Button
-              onClick={fillSelfAddress}
-              disabled={!address}
-              className="px-4 py-3 bg-[#333] text-gray-300 border border-[#444] rounded-lg hover:bg-[#444] transition-colors text-sm w-full sm:w-auto flex-shrink-0"
-            >
-              Use My Address
-            </Button>
-          </div>
-          <div className="text-xs text-gray-400">
-            {receiverAddress ? (
-              <span>NFT will be sent to: {receiverAddress}</span>
-            ) : (
-              <span>If empty, NFT will be sent to your address ({address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Not connected'})</span>
-            )}
-          </div>
-        </div>
-        
-        {/* Transfer Summary */}
-        {selectedTokenId && (
-          <div className="p-3 rounded-lg border border-[#444] bg-[#18191c]">
-            <h3 className="text-sm font-medium text-gray-300 mb-2">Transfer Summary</h3>
-            <div className="space-y-1.5 text-sm">
-              <div className="flex justify-between items-start">
-                <span className="text-gray-400 flex-shrink-0">From:</span>
-                <span className="text-white text-right truncate ml-2">{sourceChain.name}</span>
-              </div>
-              <div className="flex justify-between items-start">
-                <span className="text-gray-400 flex-shrink-0">To:</span>
-                <span className="text-white text-right truncate ml-2">{targetChain.name}</span>
-              </div>
-              <div className="flex justify-between items-start">
-                <span className="text-gray-400 flex-shrink-0">NFT:</span>
-                <span className="text-white text-right truncate ml-2">#{selectedTokenId}</span>
-              </div>
-              <div className="flex justify-between items-start">
-                <span className="text-gray-400 flex-shrink-0">Receiver:</span>
-                <span className="text-white text-xs text-right truncate ml-2">
-                  {(() => {
-                    const finalReceiver = receiverAddress || address || '';
-                    return finalReceiver ? `${finalReceiver.slice(0, 6)}...${finalReceiver.slice(-4)}` : 'Not set';
-                  })()}
-                </span>
-              </div>
-              <div className="flex justify-between items-start">
-                <span className="text-gray-400 flex-shrink-0">Estimated Time:</span>
-                <span className="text-white text-right truncate ml-2">2-5 minutes</span>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Transfer Button */}
-        <Button
-          onClick={handleCrossChainTransfer}
-          disabled={!selectedTokenId || isTransferring || isApproving || isPending || !address || isSwitchingChain}
-          className="w-full bg-[#3af73e] text-black font-medium py-3 rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSwitchingChain ? (
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-              Switching Network...
-            </div>
-          ) : isApproving || (isPending && pendingApprovalTokenId !== null) ? (
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-              Approving...
-            </div>
-          ) : isTransferring || (isPending && pendingApprovalTokenId === null) ? (
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-              Transferring...
-            </div>
-          ) : address && sourceChain?.id && chainId !== sourceChain.id ? (
-            `Switch to ${sourceChain.name} & Transfer`
-          ) : (
-            !isApproved ? 'Approve & Transfer' : 'Cross-Chain Transfer'
-          )}
-        </Button>
-        
-        {/* Connect Wallet Notice */}
-        {!address && (
-          <div className="text-center p-2 rounded-lg border border-yellow-500/30 bg-yellow-500/5">
-            <div className="text-sm text-yellow-400">⚠️ Connect wallet to enable transfers</div>
-          </div>
-        )}
+                    </Button>
+
+                    {/* Connect Wallet Notice */}
+                    {!address && (
+                      <div className="text-center p-3 border border-yellow-500/40 bg-yellow-500/5 text-[11px] uppercase tracking-[0.25em] text-yellow-300">
+                        Connect wallet to enable transfers
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -691,7 +748,7 @@ export default function CrossChain({ contractAddress, collection }: CrossChainPr
               {/* Right Section: Latest Transaction History (Desktop only) */}
               <div className="hidden lg:block lg:w-1/2">
                 <div className="w-full">
-                  <div className="p-4 space-y-3 rounded-lg border border-[#444] bg-[#18191c] min-h-[600px]">
+                  <div className="p-4 space-y-3 border border-border bg-bg-card min-h-[600px]">
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-medium text-gray-300">
                         Your Cross-Chain Transaction History
@@ -734,7 +791,7 @@ export default function CrossChain({ contractAddress, collection }: CrossChainPr
                             {/* Transaction Hash */}
                             <div className="space-y-1 mb-2">
                               <div className="text-xs text-gray-400">Transaction Hash</div>
-                              <div className="font-mono text-xs text-white bg-[#2a2d30] p-2 rounded border break-all overflow-hidden">
+                              <div className="font-mono text-xs text-primary bg-bg-tertiary p-2 border border-border break-all overflow-hidden">
                                 {transaction.transactionHash}
                               </div>
                             </div>
@@ -787,7 +844,7 @@ export default function CrossChain({ contractAddress, collection }: CrossChainPr
                             
                             {/* Timestamp */}
                             {transaction.blockTimestamp && (
-                              <div className="pt-2 border-t border-[#444]">
+                              <div className="pt-2 border-t border-border">
                                 <div className="text-xs text-gray-500">
                                   Last updated: {(() => {
                                     const date = new Date(transaction.blockTimestamp);
@@ -814,7 +871,7 @@ export default function CrossChain({ contractAddress, collection }: CrossChainPr
               <div className="lg:hidden w-full flex justify-center">
                 {(cctxData || cctxHistory.length > 0) && (
                   <div className="w-full max-w-md mt-4">
-                    <div className="p-4 space-y-3 rounded-lg border border-[#444] bg-[#18191c]">
+                    <div className="p-4 space-y-3 border border-border bg-bg-card">
                       <div className="flex items-center justify-between">
                         <h3 className="text-sm font-medium text-gray-300">
                           {cctxHistory.length > 1 ? 'Your Cross-Chain Transaction History' : 'Your Latest Cross-Chain Transaction'}
@@ -855,7 +912,7 @@ export default function CrossChain({ contractAddress, collection }: CrossChainPr
                               {/* Transaction Hash */}
                               <div className="space-y-1 mb-2">
                                 <div className="text-xs text-gray-400">Transaction Hash</div>
-                                <div className="font-mono text-xs text-white bg-[#2a2d30] p-2 rounded border break-all overflow-hidden">
+                                <div className="font-mono text-xs text-primary bg-bg-tertiary p-2 border border-border break-all overflow-hidden">
                                   {latestTransaction.transactionHash}
                                 </div>
                               </div>
@@ -898,7 +955,7 @@ export default function CrossChain({ contractAddress, collection }: CrossChainPr
                               
                               {/* Timestamp */}
                               {latestTransaction.blockTimestamp && (
-                                <div className="pt-2 border-t border-[#444]">
+                                <div className="pt-2 border-t border-border">
                                   <div className="text-xs text-gray-500">
                                     Last updated: {(() => {
                                       const date = new Date(latestTransaction.blockTimestamp);
@@ -917,16 +974,16 @@ export default function CrossChain({ contractAddress, collection }: CrossChainPr
               </div>
             </div>
           </TabsContent>
-          
-          <TabsContent value="history" className="m-0">
+          <TabsContent value="history" className="p-4 lg:p-6">
             <CrosschainHistory 
               baseContractAddress={sourceChain.id === 84532 ? (sourceChainContractAddress as string || '') : (targetChainContractAddress as string || '')}
               bscContractAddress={sourceChain.id === 97 ? (sourceChainContractAddress as string || '') : (targetChainContractAddress as string || '')}
             />
           </TabsContent>
-        </Tabs>
-      </div>
-      
+          </div>
+        </div>
+      </Tabs>
+
       {/* Transaction Dialog */}
       <TransactionDialog
         isOpen={dialogState.isOpen}

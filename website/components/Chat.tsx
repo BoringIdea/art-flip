@@ -368,53 +368,46 @@ export default function Chat({ contractAddress, collection, chainId }: ChatProps
 
   if (!address) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 p-4">
-        <div className="text-gray-400 text-center">
-          <p className="text-lg mb-2">Connect your wallet to join the chat</p>
-          <p className="text-sm">You need to connect your wallet to participate in the chat</p>
-        </div>
+      <div className="flex flex-col items-center justify-center h-64 border border-border bg-bg-card px-4 text-center">
+        <p className="text-primary text-lg font-bold mb-2">Connect your wallet to join the chat</p>
+        <p className="text-secondary text-sm">You need to connect your wallet to participate in the chat.</p>
       </div>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 p-4">
-        <div className="text-center">
-          <h3 className="text-lg font-semibold text-white mb-4">Join Collection Chat</h3>
-          <p className="text-gray-400 mb-6">
-            Sign a message to verify you own NFTs from this collection
+      <div className="flex flex-col items-center justify-center h-64 border border-border bg-bg-card px-4 text-center gap-4">
+        <div>
+          <h3 className="text-lg font-bold text-primary mb-2">Join Collection Chat</h3>
+          <p className="text-secondary text-sm">
+            Sign a message to verify you own NFTs from this collection.
           </p>
-          {error && (
-            <div className="text-red-400 mb-4 p-3 bg-red-900/20 border border-red-800 rounded">
-              {error}
-            </div>
-          )}
-          <Button
-            onClick={handleSignMessage}
-            disabled={isLoading || isPending}
-            className="bg-[#3af73e] hover:bg-[#2dd32d] text-black font-semibold px-6 py-2"
-          >
-            {isLoading || isPending ? 'Signing...' : 'Sign Message'}
-          </Button>
         </div>
+        {error && (
+          <div className="text-red-400 text-sm p-3 border border-red-500 bg-red-500/10 w-full max-w-md">
+            {error}
+          </div>
+        )}
+        <Button onClick={handleSignMessage} disabled={isLoading || isPending} className="px-6 py-2">
+          {isLoading || isPending ? 'Signing...' : 'Sign Message'}
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-[600px] bg-[#171a1f] border border-gray-800 rounded-lg overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-800 bg-[#1a1d23]">
+    <div className="flex flex-col h-[600px] border border-border bg-bg-card overflow-hidden">
+      <div className="flex items-center justify-between p-4 border-b border-border bg-background">
         <div>
-          <h3 className="text-lg font-semibold text-white">Collection Chat</h3>
-          <p className="text-sm text-gray-400">
+          <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-secondary">Collection Chat</h3>
+          <p className="text-xs text-secondary">
             {onlineUsers.length} member{onlineUsers.length !== 1 ? 's' : ''} online
           </p>
         </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-          <span className="text-sm text-gray-400">Connected</span>
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 bg-flip-primary rounded-none" />
+          <span className="text-xs text-secondary">Connected</span>
         </div>
       </div>
 
@@ -423,13 +416,9 @@ export default function Chat({ contractAddress, collection, chainId }: ChatProps
         {/* Load More Button */}
         {hasMoreMessages && messages.length > 0 && (
           <div className="text-center">
-            <button
-              onClick={loadMoreMessages}
-              disabled={isLoadingHistory}
-              className="px-4 py-2 bg-[#3af73e] text-black rounded-lg hover:bg-[#2dd32d] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+            <Button onClick={loadMoreMessages} disabled={isLoadingHistory} className="px-4 py-2">
               {isLoadingHistory ? 'Loading...' : 'Load More Messages'}
-            </button>
+            </Button>
           </div>
         )}
 
@@ -447,22 +436,22 @@ export default function Chat({ contractAddress, collection, chainId }: ChatProps
             return (
               <div key={message.id} className={`flex items-start ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
                 <div className={`flex items-start space-x-3 max-w-[80%] ${isOwnMessage ? 'flex-row-reverse space-x-reverse' : ''}`}>
-                  <div className="w-8 h-8 bg-[#3af73e] rounded-full flex items-center justify-center text-black font-semibold text-sm flex-shrink-0">
+                  <div className="w-8 h-8 bg-flip-primary text-black flex items-center justify-center font-semibold text-sm flex-shrink-0">
                     {getDefaultAvatar(message.walletAddress)}
                   </div>
                   <div className={`flex-1 ${isOwnMessage ? 'text-right' : 'text-left'}`}>
                     <div className={`flex items-center space-x-2 mb-1 ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
-                      <span className="text-sm font-medium text-white">
+                      <span className="text-sm font-medium text-primary">
                         {formatWalletAddress(message.walletAddress)}
                       </span>
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-secondary">
                         {new Date(message.createdAt).toLocaleTimeString()}
                       </span>
                     </div>
-                    <div className={`inline-block p-3 rounded-lg ${
+                    <div className={`inline-block p-3 rounded-none border border-border ${
                       isOwnMessage 
-                        ? 'bg-[#3af73e] text-black' 
-                        : 'bg-[#2f343e] text-gray-200'
+                        ? 'bg-flip-primary text-black' 
+                        : 'bg-bg-tertiary text-primary'
                     }`}>
                       <p className="text-sm">{message.content}</p>
                     </div>
@@ -476,25 +465,25 @@ export default function Chat({ contractAddress, collection, chainId }: ChatProps
       </div>
 
       {/* Message Input */}
-      <div className="p-4 pt-6 pb-12 border-t border-gray-800 bg-[#1a1d23]">
+      <div className="p-4 pt-6 pb-12 border-t border-border bg-background">
         <div className="flex space-x-2">
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Type a message..."
-            className="flex-1 bg-[#2f343e] border-gray-700 text-white placeholder-gray-400 focus:border-[#3af73e] focus:ring-1 focus:ring-[#3af73e]"
+            className="flex-1"
             maxLength={500}
           />
           <Button
             onClick={handleSendMessage}
             disabled={!newMessage.trim()}
-            className="bg-[#3af73e] hover:bg-[#2dd32d] text-black font-semibold px-4"
+            className="px-4"
           >
             Send
           </Button>
         </div>
-        <div className="text-xs text-gray-400 mt-1">
+        <div className="text-xs text-secondary mt-1">
           {newMessage.length}/500 characters
         </div>
       </div>

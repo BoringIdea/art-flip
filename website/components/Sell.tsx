@@ -289,17 +289,23 @@ export default function Sell({ contractAddress, collection }: { contractAddress:
   return (
     <div className="flex flex-col pb-32">
       {/* Header */}
-      <div className="flex justify-between items-center p-4 border-b border-[#444]">
-        <h1 className="text-base sm:text-lg text-[#aaa]">Holding NFTs: {balance?.toString() || '0'}</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-border px-3 sm:px-4 py-4 bg-bg-card">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-secondary">Holding NFTs</p>
+          <p className="text-lg font-black text-primary">{balance?.toString() || '0'}</p>
+        </div>
+        <p className="text-xs text-secondary max-w-md">
+          Select items to sell individually or sweep multiple at once.
+        </p>
       </div>
       
       {/* NFT Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 p-4 min-h-[200px]">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4 p-3 sm:p-4 min-h-[200px]">
         {!address ? (
-          <div className="col-span-full flex flex-col justify-center items-center min-h-[200px] text-gray-400">
+          <div className="col-span-full flex flex-col justify-center items-center min-h-[200px] text-secondary">
             <div className="text-6xl mb-4">🔌</div>
-            <div className="text-xl font-medium mb-2">Connect Wallet</div>
-            <div className="text-sm text-gray-500">Please connect your wallet to view your NFTs.</div>
+            <div className="text-xl font-bold text-primary mb-2">Connect Wallet</div>
+            <div className="text-sm text-secondary">Please connect your wallet to view your NFTs.</div>
           </div>
         ) : !hasInitialLoad ? (
           <div className="col-span-full flex justify-center items-center min-h-[200px]">
@@ -326,10 +332,10 @@ export default function Sell({ contractAddress, collection }: { contractAddress:
             <Loading />
           </div>
         ) : (
-          <div className="col-span-full flex flex-col justify-center items-center min-h-[200px] text-gray-400">
+          <div className="col-span-full flex flex-col justify-center items-center min-h-[200px] text-secondary">
             <div className="text-6xl mb-4">💼</div>
-            <div className="text-xl font-medium mb-2">No NFTs to Sell</div>
-            <div className="text-sm text-gray-500">You don't own any NFTs in this collection.</div>
+            <div className="text-xl font-bold text-primary mb-2">No NFTs to Sell</div>
+            <div className="text-sm text-secondary">You don't own any NFTs in this collection.</div>
           </div>
         )}
       </div>

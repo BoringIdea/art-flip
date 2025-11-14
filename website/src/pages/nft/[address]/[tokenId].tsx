@@ -10,7 +10,8 @@ import { PRICE_ABI, getTradeContractAddress } from '@/src/contract';
 import { buildBuyTx } from '@/src/onchain/tradeTx';
 import { SupportedChainId } from '@/src/alchemy';
 import TransactionDialog from '@/components/shared/TransactionDialog';
-import { getChainSymbol } from '@/src/utils';
+import { getChainSymbol, sliceAddress } from '@/src/utils';
+import { Button } from '@/components/ui/button';
 
 export default function NFTDetailPage() {
   const params = useParams();
@@ -76,52 +77,71 @@ export default function NFTDetailPage() {
     return `${n.toFixed(4).replace(/\.?0+$/, '')} ${getChainSymbol(chainId)}`;
   }, [buyPrice, chainId]);
 
+  const tokenLabel = name || `${collection?.symbol || 'Token'} #${tokenId}`;
+  const collectionName = collection?.name || 'Collection';
+
   return (
-    <div className="w-full min-h-screen bg-transparent">
-      <div className="container w-full max-w-full px-2 sm:px-6 lg:px-8 pb-12 pt-6 sm:pt-10">
+    <div className="w-full min-h-screen bg-black text-primary">
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8 space-y-6">
         <button
           onClick={() => router.back()}
-          className="mb-4 inline-flex items-center gap-2 text-sm text-gray-300 hover:text-white"
+          className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.35em] text-secondary hover:text-white"
         >
           <span className="text-lg">&lt;</span>
           Back
         </button>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* left: image and buy */}
-          <div className="md:col-span-1">
-            <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-4 flex flex-col items-center">
-              <div className="w-full aspect-square rounded-lg overflow-hidden bg-neutral-800 flex items-center justify-center">
-                {imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={imageUrl} alt={name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="text-gray-600">No Image</div>
-                )}
+
+        <div className="border border-border bg-bg-card/40 p-4 sm:p-6 flex flex-col lg:flex-row gap-6">
+          <div className="lg:w-1/2 space-y-4">
+            <div className="border border-border bg-black/40 aspect-square flex items-center justify-center overflow-hidden">
+              {imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={imageUrl} alt={tokenLabel} className="w-full h-full object-cover" />
+              ) : (
+                <div className="text-secondary uppercase tracking-[0.3em] text-xs">
+                  No Image
+                </div>
+              )}
+            </div>
+            <div className="border border-border bg-black/40 p-4 space-y-3">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.35em] text-secondary">Token</p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-white">{tokenLabel}</h1>
+                <p className="text-xs text-secondary tracking-[0.25em] uppercase">
+                  {collectionName} • ID #{tokenId}
+                </p>
               </div>
-              <div className="w-full mt-4">
-                <div className="text-white text-lg font-semibold">{name || `${collection?.symbol || ''} #${tokenId}`}</div>
-                <div className="text-gray-400 text-sm mt-1">Floor Price: {floorText}</div>
-                <button
-                  className="mt-4 w-full bg-[#3af73e] text-black font-medium px-4 py-2 rounded hover:bg-opacity-90 transition-colors disabled:opacity-50"
-                  onClick={handleBuyNow}
-                  disabled={!buyPrice || isPending}
-                >
-                  Buy Now
-                </button>
+              <div className="flex flex-wrap items-baseline gap-2">
+                <p className="text-[11px] uppercase tracking-[0.3em] text-secondary">
+                  Floor Price
+                </p>
+                <span className="text-xl font-semibold text-white">{floorText}</span>
               </div>
+              <Button
+                onClick={handleBuyNow}
+                disabled={!buyPrice || isPending}
+                className="w-full border border-flip-primary bg-flip-primary text-black hover:bg-[#1FB455]"
+              >
+                {isPending ? 'Processing...' : 'Buy Now'}
+              </Button>
             </div>
           </div>
 
-          {/* right: traits and activity */}
-          <div className="md:col-span-2 flex flex-col gap-6">
-            <NFTTraits traits={traits as any[]} />
-            <NFTActivity collectionAddress={address} tokenId={tokenId} />
+          <div className="lg:w-1/2 flex flex-col gap-4">
+            <div className="border border-border bg-black/40 p-4">
+              <p className="text-[11px] uppercase tracking-[0.35em] text-secondary mb-2">Traits</p>
+              <NFTTraits traits={traits as any[]} />
+            </div>
+            <div className="border border-border bg-black/40 p-4 flex-1">
+              <p className="text-[11px] uppercase tracking-[0.35em] text-secondary mb-2">Activity</p>
+              <NFTActivity collectionAddress={address} tokenId={tokenId} />
+            </div>
           </div>
         </div>
       </div>
 
       <TransactionDialog
-        isOpen={false}
+        isOpen={isPending}
         onOpenChange={() => {}}
         status={isPending ? 'pending' : isConfirmed ? 'success' : 'idle'}
         hash={hash}
@@ -132,5 +152,3 @@ export default function NFTDetailPage() {
     </div>
   );
 }
-
-
