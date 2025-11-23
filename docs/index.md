@@ -2,7 +2,7 @@
 layout: home
 
 hero:
-  name: "Flip Docs"
+  name: "ArtFlip Docs"
   text: "NFT Liquidity Solution"
   tagline: "An innovative NFT liquidity solution with intelligent pricing and instant trading"
   actions:

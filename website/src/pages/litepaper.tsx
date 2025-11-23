@@ -116,7 +116,7 @@ export default function Litepaper() {
                 </span>
               </div>
               <a
-                href="https://flipnft.gitbook.io/flip-docs"
+                href="https://www.docs.flipnft.xyz/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-secondary text-sm sm:text-base font-semibold uppercase tracking-[0.3em] border border-border px-3 py-2 rounded hover:border-flip-primary/60"
